@@ -1,0 +1,121 @@
+/* 
+ * Copyright (c) Microsoft Corporation. All rights reserved. Licensed under the MIT license.
+ * See LICENSE in the project root for license information.
+ */
+
+html,
+body {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  display: flex;
+  flex-direction: column;
+  background: #faf9f8;
+  color: #323130;
+}
+
+.ms-welcome__main {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 1 0 0;
+  padding: 10px 20px;
+}
+
+.task-header {
+  padding: 16px 20px;
+  background: #ffffff;
+  border-bottom: 1px solid #edebe9;
+}
+
+.task-header h1 {
+  margin: 0 0 4px 0;
+  font-weight: 600;
+}
+
+.task-header p {
+  margin: 0;
+  color: #605e5c;
+}
+
+.task-body {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 16px 20px;
+  overflow-y: auto;
+}
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.selection-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.selection-label {
+  color: #605e5c;
+}
+
+.selection-value {
+  font-weight: 600;
+}
+
+.checkbox-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  border: 1px solid #edebe9;
+  background: #ffffff;
+  border-radius: 4px;
+  padding: 8px;
+  max-height: 220px;
+  overflow-y: auto;
+}
+
+.checkbox-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.checkbox-row input {
+  margin: 0;
+}
+
+.empty-state {
+  color: #8a8886;
+  font-size: 12px;
+}
+
+.status {
+  min-height: 20px;
+  padding: 8px;
+  border-radius: 4px;
+  border: 1px solid transparent;
+}
+
+.status--info {
+  background: #eef6ff;
+  color: #0b3d91;
+  border-color: #c7e0f4;
+}
+
+.status--error {
+  background: #fde7e9;
+  color: #a80000;
+  border-color: #f3c6c6;
+}

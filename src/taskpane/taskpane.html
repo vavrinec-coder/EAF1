@@ -1,0 +1,57 @@
+<!-- Copyright (c) Microsoft Corporation. All rights reserved. Licensed under the MIT License. -->
+<!-- Task pane UI for the simplified Unpivot feature. -->
+
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>EAF Task Pane Add-in</title>
+
+    <!-- Office JavaScript API -->
+    <script type="text/javascript" src="https://appsforoffice.microsoft.com/lib/1/hosted/office.js"></script>
+
+    <!-- For more information on Fluent UI, visit https://developer.microsoft.com/fluentui#/. -->
+    <link rel="stylesheet" href="https://res-1.cdn.office.net/files/fabric-cdn-prod_20230815.002/office-ui-fabric-core/11.1.0/css/fabric.min.css"/>
+
+    <!-- Template styles -->
+    <link href="taskpane.css" rel="stylesheet" type="text/css" />
+</head>
+
+<body class="ms-font-m ms-Fabric">
+    <header class="task-header">
+        <h1 class="ms-font-xl">Unpivot</h1>
+        <p class="ms-font-s">Convert repeated columns into attribute/value pairs.</p>
+    </header>
+    <section id="sideload-msg" class="ms-welcome__main">
+        <h2 class="ms-font-xl">Please <a target="_blank" href="https://learn.microsoft.com/office/dev/add-ins/testing/test-debug-office-add-ins#sideload-an-office-add-in-for-testing">sideload</a> your add-in to see app body.</h2>
+    </section>
+    <main id="app-body" class="task-body" style="display: none;">
+        <div class="section">
+            <button id="load-selection" class="ms-Button ms-Button--primary">
+                <span class="ms-Button-label">Load Selection</span>
+            </button>
+            <div class="selection-row">
+                <span class="selection-label">Selected range:</span>
+                <span id="selected-range" class="selection-value">None</span>
+            </div>
+        </div>
+
+        <div class="section">
+            <h3 class="ms-font-m-plus">Keep (do NOT unpivot)</h3>
+            <div id="header-list" class="checkbox-list" role="list"></div>
+        </div>
+
+        <div class="section">
+            <button id="unpivot" class="ms-Button ms-Button--primary">
+                <span class="ms-Button-label">Unpivot to New Sheet</span>
+            </button>
+        </div>
+
+        <div id="status" class="status" role="status" aria-live="polite"></div>
+    </main>
+</body>
+
+</html>
