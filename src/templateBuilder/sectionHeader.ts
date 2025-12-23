@@ -1,6 +1,7 @@
 /* global Excel */
 
 export type SectionHeaderSpec = {
+  startCell: string;
   title: string;
   rows: number;
   columns: number;
@@ -20,7 +21,8 @@ export type SectionHeaderSpec = {
 
 export async function insertSectionHeader(spec: SectionHeaderSpec): Promise<void> {
   await Excel.run(async (context) => {
-    const anchorCell = context.workbook.getActiveCell();
+    const worksheet = context.workbook.worksheets.getActiveWorksheet();
+    const anchorCell = worksheet.getRange(spec.startCell);
     const targetRange = anchorCell.getResizedRange(spec.rows - 1, spec.columns - 1);
 
     targetRange.format.fill.color = spec.fillColor;
@@ -35,8 +37,12 @@ export async function insertSectionHeader(spec: SectionHeaderSpec): Promise<void
         : Excel.HorizontalAlignment.left;
     targetRange.format.verticalAlignment = Excel.VerticalAlignment.center;
 
-    const titleCell = targetRange.getCell(0, 0);
-    titleCell.values = [[spec.title]];
+    const values: string[][] = Array.from({ length: spec.rows }, (_, rowIndex) =>
+      Array.from({ length: spec.columns }, (_, columnIndex) =>
+        rowIndex === 0 && columnIndex === 0 ? spec.title : ""
+      )
+    );
+    targetRange.values = values;
 
     const edges = [
       Excel.BorderIndex.edgeTop,

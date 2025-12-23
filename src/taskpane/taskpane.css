@@ -151,6 +151,12 @@ body {
   color: #605e5c;
 }
 
+.form-error {
+  min-height: 16px;
+  font-size: 12px;
+  color: #a80000;
+}
+
 .form-actions {
   display: flex;
 }

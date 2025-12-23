@@ -57,6 +57,23 @@
             </button>
             <form id="section-header-form" class="template-form" hidden>
                 <div class="form-field">
+                    <label class="form-label" for="section-start-cell">Start cell</label>
+                    <input
+                        id="section-start-cell"
+                        class="form-input"
+                        type="text"
+                        placeholder="B7"
+                        required
+                    />
+                    <div
+                        id="section-start-error"
+                        class="form-error"
+                        role="alert"
+                        aria-live="polite"
+                        hidden
+                    ></div>
+                </div>
+                <div class="form-field">
                     <label class="form-label" for="section-title">Title text</label>
                     <input id="section-title" class="form-input" type="text" required />
                 </div>
@@ -116,10 +133,10 @@
                         </select>
                     </div>
                 </div>
-                <p class="form-hint">Select the top-left cell in Excel before inserting.</p>
+                <p class="form-hint">Enter a start cell, then add the section header.</p>
                 <div class="form-actions">
                     <button id="apply-section-header" class="ms-Button ms-Button--primary" type="submit">
-                        <span class="ms-Button-label">Apply Section Header</span>
+                        <span class="ms-Button-label">Add Section Header</span>
                     </button>
                 </div>
             </form>

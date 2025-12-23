@@ -3,12 +3,15 @@
 import { insertSectionHeader, SectionHeaderSpec } from "../templateBuilder/sectionHeader";
 
 const MAX_EXCEL_ROWS = 1048576;
+const MAX_EXCEL_COLUMNS = 16384;
 
 let selectedRangeEl: HTMLSpanElement;
 let headerListEl: HTMLDivElement;
 let statusEl: HTMLDivElement;
 let sectionHeaderFormEl: HTMLFormElement;
 let sectionHeaderToggleEl: HTMLButtonElement;
+let sectionStartCellInputEl: HTMLInputElement;
+let sectionStartCellErrorEl: HTMLDivElement;
 let sectionTitleInputEl: HTMLInputElement;
 let sectionRowsInputEl: HTMLInputElement;
 let sectionColumnsInputEl: HTMLInputElement;
@@ -44,6 +47,8 @@ Office.onReady((info) => {
 
   sectionHeaderToggleEl = document.getElementById("toggle-section-header") as HTMLButtonElement;
   sectionHeaderFormEl = document.getElementById("section-header-form") as HTMLFormElement;
+  sectionStartCellInputEl = document.getElementById("section-start-cell") as HTMLInputElement;
+  sectionStartCellErrorEl = document.getElementById("section-start-error") as HTMLDivElement;
   sectionTitleInputEl = document.getElementById("section-title") as HTMLInputElement;
   sectionRowsInputEl = document.getElementById("section-rows") as HTMLInputElement;
   sectionColumnsInputEl = document.getElementById("section-columns") as HTMLInputElement;
@@ -207,7 +212,7 @@ function toggleSectionHeaderForm(): void {
   sectionHeaderFormEl.hidden = !sectionHeaderFormEl.hidden;
 
   if (!sectionHeaderFormEl.hidden) {
-    sectionTitleInputEl.focus();
+    sectionStartCellInputEl.focus();
   }
 }
 
@@ -218,11 +223,14 @@ async function handleInsertSectionHeader(): Promise<void> {
     return;
   }
 
-  setStatus("Inserting section header...", "info");
+  setStatus("Adding section header...", "info");
 
   try {
     await insertSectionHeader(result.spec);
-    setStatus(`Inserted "${result.spec.title}" section header.`, "info");
+    setStatus(
+      `Added "${result.spec.title}" section header at ${result.spec.startCell}.`,
+      "info"
+    );
   } catch (error) {
     setStatus(getErrorMessage(error), "error");
   }
@@ -233,6 +241,20 @@ type SectionHeaderFormResult =
   | { ok: false; error: string };
 
 function getSectionHeaderSpecFromForm(): SectionHeaderFormResult {
+  setStartCellError("");
+
+  const startCellInput = sectionStartCellInputEl.value.trim().toUpperCase();
+  if (!startCellInput) {
+    setStartCellError("Enter a start cell like B7.");
+    return { ok: false, error: "Start cell is required." };
+  }
+
+  const parsedStartCell = parseA1CellAddress(startCellInput);
+  if (!parsedStartCell) {
+    setStartCellError("Use a single-cell A1 address like B7.");
+    return { ok: false, error: "Start cell must be a single-cell address like B7." };
+  }
+
   const title = sectionTitleInputEl.value.trim();
   if (!title) {
     return { ok: false, error: "Enter a title for the section header." };
@@ -246,6 +268,15 @@ function getSectionHeaderSpecFromForm(): SectionHeaderFormResult {
   const columns = parsePositiveInt(sectionColumnsInputEl.value);
   if (columns === null) {
     return { ok: false, error: "Columns must be a whole number of 1 or greater." };
+  }
+
+  const endRow = parsedStartCell.row + rows - 1;
+  const endColumn = parsedStartCell.column + columns - 1;
+  if (endRow > MAX_EXCEL_ROWS || endColumn > MAX_EXCEL_COLUMNS) {
+    return {
+      ok: false,
+      error: "Section header would exceed worksheet limits. Adjust the start cell or size.",
+    };
   }
 
   const fillColor = sectionFillColorInputEl.value.trim();
@@ -280,6 +311,7 @@ function getSectionHeaderSpecFromForm(): SectionHeaderFormResult {
   return {
     ok: true,
     spec: {
+      startCell: startCellInput,
       title,
       rows,
       columns,
@@ -315,6 +347,48 @@ function parsePositiveNumber(value: string): number | null {
   }
 
   return parsed;
+}
+
+type CellAddress = {
+  row: number;
+  column: number;
+};
+
+function parseA1CellAddress(value: string): CellAddress | null {
+  if (value.includes(":") || value.includes("!")) {
+    return null;
+  }
+
+  const match = /^([A-Z]{1,3})([1-9][0-9]*)$/.exec(value);
+  if (!match) {
+    return null;
+  }
+
+  const column = columnLettersToNumber(match[1]);
+  const row = Number(match[2]);
+  if (!Number.isFinite(row) || row < 1) {
+    return null;
+  }
+
+  if (column < 1 || column > MAX_EXCEL_COLUMNS || row > MAX_EXCEL_ROWS) {
+    return null;
+  }
+
+  return { row, column };
+}
+
+function columnLettersToNumber(letters: string): number {
+  let value = 0;
+  for (let i = 0; i < letters.length; i += 1) {
+    value = value * 26 + (letters.charCodeAt(i) - 64);
+  }
+
+  return value;
+}
+
+function setStartCellError(message: string): void {
+  sectionStartCellErrorEl.textContent = message;
+  sectionStartCellErrorEl.hidden = message.length === 0;
 }
 
 function isValidHexColor(value: string): boolean {

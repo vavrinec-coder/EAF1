@@ -8,7 +8,7 @@ This template is written using [TypeScript](http://www.typescriptlang.org/). For
 
 ## Section Header
 
-Use the task pane "Template Builder" to insert a formatted Section Header. Select the top-left cell, fill in the title and formatting options, then click "Insert Section Header" and "Apply Section Header" to create the header range.
+Use the task pane "Template Builder" to insert a formatted Section Header. Enter a start cell, fill in the title and formatting options, then click "Insert Section Header" and "Add Section Header" to create the header range.
 
 ## Debugging
 
