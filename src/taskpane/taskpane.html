@@ -50,6 +50,81 @@
             </button>
         </div>
 
+        <div class="section">
+            <h3 class="ms-font-m-plus">Template Builder</h3>
+            <button id="toggle-section-header" class="ms-Button ms-Button--secondary" type="button">
+                <span class="ms-Button-label">Insert Section Header</span>
+            </button>
+            <form id="section-header-form" class="template-form" hidden>
+                <div class="form-field">
+                    <label class="form-label" for="section-title">Title text</label>
+                    <input id="section-title" class="form-input" type="text" required />
+                </div>
+                <div class="form-row">
+                    <div class="form-field">
+                        <label class="form-label" for="section-rows">Rows</label>
+                        <input id="section-rows" class="form-input" type="number" min="1" value="1" />
+                    </div>
+                    <div class="form-field">
+                        <label class="form-label" for="section-columns">Columns</label>
+                        <input id="section-columns" class="form-input" type="number" min="1" value="8" />
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-field">
+                        <label class="form-label" for="section-fill-color">Background color</label>
+                        <input id="section-fill-color" class="form-input" type="text" value="#FFD966" />
+                    </div>
+                    <div class="form-field">
+                        <label class="form-label" for="section-font-color">Font color</label>
+                        <input id="section-font-color" class="form-input" type="text" value="#000000" />
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-field">
+                        <label class="form-label" for="section-font-name">Font name</label>
+                        <input id="section-font-name" class="form-input" type="text" value="Calibri" />
+                    </div>
+                    <div class="form-field">
+                        <label class="form-label" for="section-font-size">Font size</label>
+                        <input id="section-font-size" class="form-input" type="number" min="1" value="12" />
+                    </div>
+                    <div class="form-field form-field--checkbox">
+                        <label class="form-label" for="section-font-bold">Bold</label>
+                        <input id="section-font-bold" type="checkbox" checked />
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-field">
+                        <label class="form-label" for="section-horizontal-align">Horizontal</label>
+                        <select id="section-horizontal-align" class="form-input">
+                            <option value="left" selected>Left</option>
+                            <option value="center">Center</option>
+                        </select>
+                    </div>
+                    <div class="form-field">
+                        <label class="form-label" for="section-vertical-align">Vertical</label>
+                        <select id="section-vertical-align" class="form-input">
+                            <option value="center" selected>Center</option>
+                        </select>
+                    </div>
+                    <div class="form-field">
+                        <label class="form-label" for="section-border">Border</label>
+                        <select id="section-border" class="form-input">
+                            <option value="thin" selected>Thin outline</option>
+                            <option value="none">None</option>
+                        </select>
+                    </div>
+                </div>
+                <p class="form-hint">Select the top-left cell in Excel before inserting.</p>
+                <div class="form-actions">
+                    <button id="apply-section-header" class="ms-Button ms-Button--primary" type="submit">
+                        <span class="ms-Button-label">Apply Section Header</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+
         <div id="status" class="status" role="status" aria-live="polite"></div>
     </main>
 </body>

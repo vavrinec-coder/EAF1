@@ -6,6 +6,10 @@ This repository contains the source code used by the [Yo Office generator](https
 
 This template is written using [TypeScript](http://www.typescriptlang.org/). For the JavaScript version of this template, go to [Office-Addin-TaskPane-JS](https://github.com/OfficeDev/Office-Addin-TaskPane-JS).
 
+## Section Header
+
+Use the task pane "Template Builder" to insert a formatted Section Header. Select the top-left cell, fill in the title and formatting options, then click "Insert Section Header" and "Apply Section Header" to create the header range.
+
 ## Debugging
 
 This template supports debugging using any of the following techniques:

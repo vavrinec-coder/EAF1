@@ -1,10 +1,25 @@
 /* global document, Excel, Office */
 
+import { insertSectionHeader, SectionHeaderSpec } from "../templateBuilder/sectionHeader";
+
 const MAX_EXCEL_ROWS = 1048576;
 
 let selectedRangeEl: HTMLSpanElement;
 let headerListEl: HTMLDivElement;
 let statusEl: HTMLDivElement;
+let sectionHeaderFormEl: HTMLFormElement;
+let sectionHeaderToggleEl: HTMLButtonElement;
+let sectionTitleInputEl: HTMLInputElement;
+let sectionRowsInputEl: HTMLInputElement;
+let sectionColumnsInputEl: HTMLInputElement;
+let sectionFillColorInputEl: HTMLInputElement;
+let sectionFontNameInputEl: HTMLInputElement;
+let sectionFontSizeInputEl: HTMLInputElement;
+let sectionFontBoldInputEl: HTMLInputElement;
+let sectionFontColorInputEl: HTMLInputElement;
+let sectionHorizontalAlignEl: HTMLSelectElement;
+let sectionVerticalAlignEl: HTMLSelectElement;
+let sectionBorderEl: HTMLSelectElement;
 
 Office.onReady((info) => {
   if (info.host !== Office.HostType.Excel) {
@@ -27,11 +42,32 @@ Office.onReady((info) => {
   const loadButton = document.getElementById("load-selection") as HTMLButtonElement;
   const unpivotButton = document.getElementById("unpivot") as HTMLButtonElement;
 
+  sectionHeaderToggleEl = document.getElementById("toggle-section-header") as HTMLButtonElement;
+  sectionHeaderFormEl = document.getElementById("section-header-form") as HTMLFormElement;
+  sectionTitleInputEl = document.getElementById("section-title") as HTMLInputElement;
+  sectionRowsInputEl = document.getElementById("section-rows") as HTMLInputElement;
+  sectionColumnsInputEl = document.getElementById("section-columns") as HTMLInputElement;
+  sectionFillColorInputEl = document.getElementById("section-fill-color") as HTMLInputElement;
+  sectionFontNameInputEl = document.getElementById("section-font-name") as HTMLInputElement;
+  sectionFontSizeInputEl = document.getElementById("section-font-size") as HTMLInputElement;
+  sectionFontBoldInputEl = document.getElementById("section-font-bold") as HTMLInputElement;
+  sectionFontColorInputEl = document.getElementById("section-font-color") as HTMLInputElement;
+  sectionHorizontalAlignEl = document.getElementById("section-horizontal-align") as HTMLSelectElement;
+  sectionVerticalAlignEl = document.getElementById("section-vertical-align") as HTMLSelectElement;
+  sectionBorderEl = document.getElementById("section-border") as HTMLSelectElement;
+
   loadButton.addEventListener("click", () => {
     void handleLoadSelection();
   });
   unpivotButton.addEventListener("click", () => {
     void handleUnpivot();
+  });
+  sectionHeaderToggleEl.addEventListener("click", () => {
+    toggleSectionHeaderForm();
+  });
+  sectionHeaderFormEl.addEventListener("submit", (event) => {
+    event.preventDefault();
+    void handleInsertSectionHeader();
   });
 
   renderHeaders([]);
@@ -165,6 +201,124 @@ async function handleUnpivot(): Promise<void> {
   } catch (error) {
     setStatus(getErrorMessage(error), "error");
   }
+}
+
+function toggleSectionHeaderForm(): void {
+  sectionHeaderFormEl.hidden = !sectionHeaderFormEl.hidden;
+
+  if (!sectionHeaderFormEl.hidden) {
+    sectionTitleInputEl.focus();
+  }
+}
+
+async function handleInsertSectionHeader(): Promise<void> {
+  const result = getSectionHeaderSpecFromForm();
+  if (!result.ok) {
+    setStatus(result.error, "error");
+    return;
+  }
+
+  setStatus("Inserting section header...", "info");
+
+  try {
+    await insertSectionHeader(result.spec);
+    setStatus(`Inserted "${result.spec.title}" section header.`, "info");
+  } catch (error) {
+    setStatus(getErrorMessage(error), "error");
+  }
+}
+
+type SectionHeaderFormResult =
+  | { ok: true; spec: SectionHeaderSpec }
+  | { ok: false; error: string };
+
+function getSectionHeaderSpecFromForm(): SectionHeaderFormResult {
+  const title = sectionTitleInputEl.value.trim();
+  if (!title) {
+    return { ok: false, error: "Enter a title for the section header." };
+  }
+
+  const rows = parsePositiveInt(sectionRowsInputEl.value);
+  if (rows === null) {
+    return { ok: false, error: "Rows must be a whole number of 1 or greater." };
+  }
+
+  const columns = parsePositiveInt(sectionColumnsInputEl.value);
+  if (columns === null) {
+    return { ok: false, error: "Columns must be a whole number of 1 or greater." };
+  }
+
+  const fillColor = sectionFillColorInputEl.value.trim();
+  if (!isValidHexColor(fillColor)) {
+    return { ok: false, error: "Background color must be a valid hex value (e.g., #FFD966)." };
+  }
+
+  const fontName = sectionFontNameInputEl.value.trim();
+  if (!fontName) {
+    return { ok: false, error: "Font name is required." };
+  }
+
+  const fontSize = parsePositiveNumber(sectionFontSizeInputEl.value);
+  if (fontSize === null) {
+    return { ok: false, error: "Font size must be a number greater than 0." };
+  }
+
+  const fontColor = sectionFontColorInputEl.value.trim();
+  if (!isValidHexColor(fontColor)) {
+    return { ok: false, error: "Font color must be a valid hex value (e.g., #000000)." };
+  }
+
+  const horizontalValue = sectionHorizontalAlignEl.value;
+  const horizontalAlignment = horizontalValue === "center" ? "center" : "left";
+
+  const verticalValue = sectionVerticalAlignEl.value;
+  const verticalAlignment = verticalValue === "center" ? "center" : "center";
+
+  const borderValue = sectionBorderEl.value;
+  const border = borderValue === "none" ? "none" : "thin";
+
+  return {
+    ok: true,
+    spec: {
+      title,
+      rows,
+      columns,
+      fillColor,
+      font: {
+        name: fontName,
+        size: fontSize,
+        bold: sectionFontBoldInputEl.checked,
+        color: fontColor,
+      },
+      alignment: {
+        horizontal: horizontalAlignment,
+        vertical: verticalAlignment,
+      },
+      border,
+    },
+  };
+}
+
+function parsePositiveInt(value: string): number | null {
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed) || parsed < 1 || !Number.isInteger(parsed)) {
+    return null;
+  }
+
+  return parsed;
+}
+
+function parsePositiveNumber(value: string): number | null {
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed) || parsed <= 0) {
+    return null;
+  }
+
+  return parsed;
+}
+
+function isValidHexColor(value: string): boolean {
+  return /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.test(value);
 }
 
 function normalizeHeaders(headerRow: Excel.RangeValueType[]): string[] {
