@@ -22,36 +22,15 @@
 
 <body class="ms-font-m ms-Fabric">
     <header class="task-header">
-        <h1 class="ms-font-xl">Unpivot</h1>
-        <p class="ms-font-s">Convert repeated columns into attribute/value pairs.</p>
+        <h1 class="ms-font-l">EAF Task Pane Add-in</h1>
+        <p class="ms-font-s">Build templates and transform data.</p>
     </header>
     <section id="sideload-msg" class="ms-welcome__main">
         <h2 class="ms-font-xl">Please <a target="_blank" href="https://learn.microsoft.com/office/dev/add-ins/testing/test-debug-office-add-ins#sideload-an-office-add-in-for-testing">sideload</a> your add-in to see app body.</h2>
     </section>
     <main id="app-body" class="task-body" style="display: none;">
-        <div class="section">
-            <button id="load-selection" class="ms-Button ms-Button--primary">
-                <span class="ms-Button-label">Load Selection</span>
-            </button>
-            <div class="selection-row">
-                <span class="selection-label">Selected range:</span>
-                <span id="selected-range" class="selection-value">None</span>
-            </div>
-        </div>
-
-        <div class="section">
-            <h3 class="ms-font-m-plus">Keep (do NOT unpivot)</h3>
-            <div id="header-list" class="checkbox-list" role="list"></div>
-        </div>
-
-        <div class="section">
-            <button id="unpivot" class="ms-Button ms-Button--primary">
-                <span class="ms-Button-label">Unpivot to New Sheet</span>
-            </button>
-        </div>
-
-        <div class="section">
-            <h3 class="ms-font-m-plus">Template Builder</h3>
+        <div class="section template-builder">
+            <h2 class="template-builder-title">Template Builder</h2>
             <button id="toggle-section-header" class="ms-Button ms-Button--secondary" type="button">
                 <span class="ms-Button-label">Insert Section Header</span>
             </button>
@@ -141,6 +120,32 @@
                 </div>
             </form>
         </div>
+
+        <details class="collapsible">
+            <summary class="collapsible-summary">Unpivot</summary>
+            <div class="collapsible-body">
+                <div class="section">
+                    <button id="load-selection" class="ms-Button ms-Button--primary">
+                        <span class="ms-Button-label">Load Selection</span>
+                    </button>
+                    <div class="selection-row">
+                        <span class="selection-label">Selected range:</span>
+                        <span id="selected-range" class="selection-value">None</span>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h3 class="ms-font-m-plus">Keep (do NOT unpivot)</h3>
+                    <div id="header-list" class="checkbox-list" role="list"></div>
+                </div>
+
+                <div class="section">
+                    <button id="unpivot" class="ms-Button ms-Button--primary">
+                        <span class="ms-Button-label">Unpivot to New Sheet</span>
+                    </button>
+                </div>
+            </div>
+        </details>
 
         <div id="status" class="status" role="status" aria-live="polite"></div>
     </main>

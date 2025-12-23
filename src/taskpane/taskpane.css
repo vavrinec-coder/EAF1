@@ -54,6 +54,40 @@ body {
   overflow-y: auto;
 }
 
+.template-builder-title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.collapsible {
+  border: 1px solid #edebe9;
+  border-radius: 4px;
+  background: #ffffff;
+}
+
+.collapsible-summary {
+  cursor: pointer;
+  padding: 10px 12px;
+  font-weight: 600;
+  color: #323130;
+}
+
+.collapsible-summary::marker {
+  color: #605e5c;
+}
+
+.collapsible[open] .collapsible-summary {
+  border-bottom: 1px solid #edebe9;
+}
+
+.collapsible-body {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 12px;
+}
+
 .section {
   display: flex;
   flex-direction: column;
