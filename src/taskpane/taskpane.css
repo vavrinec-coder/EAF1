@@ -121,7 +121,6 @@ body {
   display: flex;
   flex-direction: column;
   gap: 4px;
-  flex: 1 1 120px;
 }
 
 .form-field--checkbox {
@@ -131,6 +130,14 @@ body {
 
 .form-field--checkbox input {
   margin: 2px 0 0 0;
+}
+
+.form-row .form-field {
+  flex: 1 1 120px;
+}
+
+.form-row .form-field--checkbox {
+  flex: 0 0 auto;
 }
 
 .form-label {
