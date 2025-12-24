@@ -31,94 +31,116 @@
     <main id="app-body" class="task-body" style="display: none;">
         <div class="section template-builder">
             <h2 class="template-builder-title">Template Builder</h2>
-            <button id="toggle-section-header" class="ms-Button ms-Button--secondary" type="button">
-                <span class="ms-Button-label">Insert Section Header</span>
-            </button>
-            <form id="section-header-form" class="template-form" hidden>
-                <div class="form-field">
-                    <label class="form-label" for="section-start-cell">Start cell</label>
-                    <input
-                        id="section-start-cell"
-                        class="form-input"
-                        type="text"
-                        placeholder="B7"
-                        required
-                    />
-                    <div
-                        id="section-start-error"
-                        class="form-error"
-                        role="alert"
-                        aria-live="polite"
-                        hidden
-                    ></div>
+            <div class="template-card">
+                <h3 class="template-section-title">Model Settings</h3>
+                <div class="template-form">
+                    <div class="form-row">
+                        <div class="form-field">
+                            <label class="form-label" for="model-constants-columns">Columns for constants</label>
+                            <input
+                                id="model-constants-columns"
+                                class="form-input"
+                                type="number"
+                                min="1"
+                                value="10"
+                            />
+                        </div>
+                        <div class="form-field">
+                            <label class="form-label" for="model-timeline-columns">Columns for timeline</label>
+                            <input
+                                id="model-timeline-columns"
+                                class="form-input"
+                                type="number"
+                                min="1"
+                                value="60"
+                            />
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-field">
+                            <label class="form-label" for="model-font-name">Font name</label>
+                            <input id="model-font-name" class="form-input" type="text" value="Verdana" />
+                        </div>
+                        <div class="form-field">
+                            <label class="form-label" for="model-font-color">Font color</label>
+                            <input id="model-font-color" class="form-input" type="text" value="#000000" />
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-field">
+                            <label class="form-label" for="model-font-size">Font size</label>
+                            <input id="model-font-size" class="form-input" type="number" min="1" value="10" />
+                        </div>
+                        <div class="form-field">
+                            <label class="form-label" for="model-header-rows">Number of rows for sheet header</label>
+                            <input id="model-header-rows" class="form-input" type="number" min="1" value="4" />
+                        </div>
+                        <div class="form-field">
+                            <label class="form-label" for="model-header-background">Background color for sheet header</label>
+                            <input
+                                id="model-header-background"
+                                class="form-input"
+                                type="text"
+                                value="#000000"
+                            />
+                        </div>
+                    </div>
+                    <div class="template-subsection-title">Global Column Widths</div>
+                    <div class="form-row">
+                        <div class="form-field form-field--compact">
+                            <label class="form-label" for="width-col-a">Column A width</label>
+                            <input id="width-col-a" class="form-input" type="number" min="0" value="1" />
+                        </div>
+                        <div class="form-field form-field--compact">
+                            <label class="form-label" for="width-col-b">Column B width</label>
+                            <input id="width-col-b" class="form-input" type="number" min="0" value="30" />
+                        </div>
+                        <div class="form-field form-field--compact">
+                            <label class="form-label" for="width-col-c">Column C width</label>
+                            <input id="width-col-c" class="form-input" type="number" min="0" value="12" />
+                        </div>
+                        <div class="form-field form-field--compact">
+                            <label class="form-label" for="width-col-d">Column D width</label>
+                            <input id="width-col-d" class="form-input" type="number" min="0" value="12" />
+                        </div>
+                        <div class="form-field form-field--compact">
+                            <label class="form-label" for="width-col-e">Column E width</label>
+                            <input id="width-col-e" class="form-input" type="number" min="0" value="1" />
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-field form-field--compact">
+                            <label class="form-label" for="width-col-f">Column F width</label>
+                            <input id="width-col-f" class="form-input" type="number" min="0" value="1" />
+                        </div>
+                        <div class="form-field form-field--compact">
+                            <label class="form-label" for="width-col-g">Column G width</label>
+                            <input id="width-col-g" class="form-input" type="number" min="0" value="1" />
+                        </div>
+                        <div class="form-field form-field--compact">
+                            <label class="form-label" for="width-col-h">Column H width</label>
+                            <input id="width-col-h" class="form-input" type="number" min="0" value="1" />
+                        </div>
+                        <div class="form-field form-field--compact">
+                            <label class="form-label" for="width-col-i">Column I width</label>
+                            <input id="width-col-i" class="form-input" type="number" min="0" value="10" />
+                        </div>
+                        <div class="form-field form-field--compact">
+                            <label class="form-label" for="width-col-j">Column J width</label>
+                            <input id="width-col-j" class="form-input" type="number" min="0" value="1" />
+                        </div>
+                    </div>
                 </div>
-                <div class="form-field">
-                    <label class="form-label" for="section-title">Title text</label>
-                    <input id="section-title" class="form-input" type="text" required />
-                </div>
-                <div class="form-row">
-                    <div class="form-field">
-                        <label class="form-label" for="section-rows">Rows</label>
-                        <input id="section-rows" class="form-input" type="number" min="1" value="1" />
-                    </div>
-                    <div class="form-field">
-                        <label class="form-label" for="section-columns">Columns</label>
-                        <input id="section-columns" class="form-input" type="number" min="1" value="8" />
-                    </div>
-                </div>
-                <div class="form-row">
-                    <div class="form-field">
-                        <label class="form-label" for="section-fill-color">Background color</label>
-                        <input id="section-fill-color" class="form-input" type="text" value="#FFD966" />
-                    </div>
-                    <div class="form-field">
-                        <label class="form-label" for="section-font-color">Font color</label>
-                        <input id="section-font-color" class="form-input" type="text" value="#000000" />
-                    </div>
-                </div>
-                <div class="form-row">
-                    <div class="form-field">
-                        <label class="form-label" for="section-font-name">Font name</label>
-                        <input id="section-font-name" class="form-input" type="text" value="Calibri" />
-                    </div>
-                    <div class="form-field">
-                        <label class="form-label" for="section-font-size">Font size</label>
-                        <input id="section-font-size" class="form-input" type="number" min="1" value="12" />
-                    </div>
-                    <div class="form-field form-field--checkbox">
-                        <label class="form-label" for="section-font-bold">Bold</label>
-                        <input id="section-font-bold" type="checkbox" checked />
-                    </div>
-                </div>
-                <div class="form-row">
-                    <div class="form-field">
-                        <label class="form-label" for="section-horizontal-align">Horizontal</label>
-                        <select id="section-horizontal-align" class="form-input">
-                            <option value="left" selected>Left</option>
-                            <option value="center">Center</option>
-                        </select>
-                    </div>
-                    <div class="form-field">
-                        <label class="form-label" for="section-vertical-align">Vertical</label>
-                        <select id="section-vertical-align" class="form-input">
-                            <option value="center" selected>Center</option>
-                        </select>
-                    </div>
-                    <div class="form-field">
-                        <label class="form-label" for="section-border">Border</label>
-                        <select id="section-border" class="form-input">
-                            <option value="thin" selected>Thin outline</option>
-                            <option value="none">None</option>
-                        </select>
-                    </div>
-                </div>
-                <p class="form-hint">Enter a start cell, then add the section header.</p>
+            </div>
+            <div class="template-card">
+                <h3 class="template-section-title">Controls</h3>
+                <p class="form-hint">Create or overwrite the Controls sheet using the model settings.</p>
                 <div class="form-actions">
-                    <button id="apply-section-header" class="ms-Button ms-Button--primary" type="submit">
-                        <span class="ms-Button-label">Add Section Header</span>
+                    <button id="create-controls-sheet" class="ms-Button ms-Button--primary" type="button">
+                        <span class="ms-Button-label">Create Controls sheet</span>
                     </button>
                 </div>
-            </form>
+            </div>
         </div>
 
         <details class="collapsible">

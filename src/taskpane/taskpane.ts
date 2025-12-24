@@ -1,6 +1,6 @@
 /* global document, Excel, Office */
 
-import { insertSectionHeader, SectionHeaderSpec } from "../templateBuilder/sectionHeader";
+import { createControlsSheet, ControlsSheetSpec } from "../templateBuilder/controlsSheet";
 
 const MAX_EXCEL_ROWS = 1048576;
 const MAX_EXCEL_COLUMNS = 16384;
@@ -8,21 +8,24 @@ const MAX_EXCEL_COLUMNS = 16384;
 let selectedRangeEl: HTMLSpanElement;
 let headerListEl: HTMLDivElement;
 let statusEl: HTMLDivElement;
-let sectionHeaderFormEl: HTMLFormElement;
-let sectionHeaderToggleEl: HTMLButtonElement;
-let sectionStartCellInputEl: HTMLInputElement;
-let sectionStartCellErrorEl: HTMLDivElement;
-let sectionTitleInputEl: HTMLInputElement;
-let sectionRowsInputEl: HTMLInputElement;
-let sectionColumnsInputEl: HTMLInputElement;
-let sectionFillColorInputEl: HTMLInputElement;
-let sectionFontNameInputEl: HTMLInputElement;
-let sectionFontSizeInputEl: HTMLInputElement;
-let sectionFontBoldInputEl: HTMLInputElement;
-let sectionFontColorInputEl: HTMLInputElement;
-let sectionHorizontalAlignEl: HTMLSelectElement;
-let sectionVerticalAlignEl: HTMLSelectElement;
-let sectionBorderEl: HTMLSelectElement;
+let constantsColumnsInputEl: HTMLInputElement;
+let timelineColumnsInputEl: HTMLInputElement;
+let modelFontNameInputEl: HTMLInputElement;
+let modelFontColorInputEl: HTMLInputElement;
+let modelFontSizeInputEl: HTMLInputElement;
+let modelHeaderRowsInputEl: HTMLInputElement;
+let modelHeaderBackgroundInputEl: HTMLInputElement;
+let widthColAInputEl: HTMLInputElement;
+let widthColBInputEl: HTMLInputElement;
+let widthColCInputEl: HTMLInputElement;
+let widthColDInputEl: HTMLInputElement;
+let widthColEInputEl: HTMLInputElement;
+let widthColFInputEl: HTMLInputElement;
+let widthColGInputEl: HTMLInputElement;
+let widthColHInputEl: HTMLInputElement;
+let widthColIInputEl: HTMLInputElement;
+let widthColJInputEl: HTMLInputElement;
+let createControlsButtonEl: HTMLButtonElement;
 
 Office.onReady((info) => {
   if (info.host !== Office.HostType.Excel) {
@@ -45,21 +48,24 @@ Office.onReady((info) => {
   const loadButton = document.getElementById("load-selection") as HTMLButtonElement;
   const unpivotButton = document.getElementById("unpivot") as HTMLButtonElement;
 
-  sectionHeaderToggleEl = document.getElementById("toggle-section-header") as HTMLButtonElement;
-  sectionHeaderFormEl = document.getElementById("section-header-form") as HTMLFormElement;
-  sectionStartCellInputEl = document.getElementById("section-start-cell") as HTMLInputElement;
-  sectionStartCellErrorEl = document.getElementById("section-start-error") as HTMLDivElement;
-  sectionTitleInputEl = document.getElementById("section-title") as HTMLInputElement;
-  sectionRowsInputEl = document.getElementById("section-rows") as HTMLInputElement;
-  sectionColumnsInputEl = document.getElementById("section-columns") as HTMLInputElement;
-  sectionFillColorInputEl = document.getElementById("section-fill-color") as HTMLInputElement;
-  sectionFontNameInputEl = document.getElementById("section-font-name") as HTMLInputElement;
-  sectionFontSizeInputEl = document.getElementById("section-font-size") as HTMLInputElement;
-  sectionFontBoldInputEl = document.getElementById("section-font-bold") as HTMLInputElement;
-  sectionFontColorInputEl = document.getElementById("section-font-color") as HTMLInputElement;
-  sectionHorizontalAlignEl = document.getElementById("section-horizontal-align") as HTMLSelectElement;
-  sectionVerticalAlignEl = document.getElementById("section-vertical-align") as HTMLSelectElement;
-  sectionBorderEl = document.getElementById("section-border") as HTMLSelectElement;
+  constantsColumnsInputEl = document.getElementById("model-constants-columns") as HTMLInputElement;
+  timelineColumnsInputEl = document.getElementById("model-timeline-columns") as HTMLInputElement;
+  modelFontNameInputEl = document.getElementById("model-font-name") as HTMLInputElement;
+  modelFontColorInputEl = document.getElementById("model-font-color") as HTMLInputElement;
+  modelFontSizeInputEl = document.getElementById("model-font-size") as HTMLInputElement;
+  modelHeaderRowsInputEl = document.getElementById("model-header-rows") as HTMLInputElement;
+  modelHeaderBackgroundInputEl = document.getElementById("model-header-background") as HTMLInputElement;
+  widthColAInputEl = document.getElementById("width-col-a") as HTMLInputElement;
+  widthColBInputEl = document.getElementById("width-col-b") as HTMLInputElement;
+  widthColCInputEl = document.getElementById("width-col-c") as HTMLInputElement;
+  widthColDInputEl = document.getElementById("width-col-d") as HTMLInputElement;
+  widthColEInputEl = document.getElementById("width-col-e") as HTMLInputElement;
+  widthColFInputEl = document.getElementById("width-col-f") as HTMLInputElement;
+  widthColGInputEl = document.getElementById("width-col-g") as HTMLInputElement;
+  widthColHInputEl = document.getElementById("width-col-h") as HTMLInputElement;
+  widthColIInputEl = document.getElementById("width-col-i") as HTMLInputElement;
+  widthColJInputEl = document.getElementById("width-col-j") as HTMLInputElement;
+  createControlsButtonEl = document.getElementById("create-controls-sheet") as HTMLButtonElement;
 
   loadButton.addEventListener("click", () => {
     void handleLoadSelection();
@@ -67,12 +73,8 @@ Office.onReady((info) => {
   unpivotButton.addEventListener("click", () => {
     void handleUnpivot();
   });
-  sectionHeaderToggleEl.addEventListener("click", () => {
-    toggleSectionHeaderForm();
-  });
-  sectionHeaderFormEl.addEventListener("submit", (event) => {
-    event.preventDefault();
-    void handleInsertSectionHeader();
+  createControlsButtonEl.addEventListener("click", () => {
+    void handleCreateControlsSheet();
   });
 
   renderHeaders([]);
@@ -208,125 +210,118 @@ async function handleUnpivot(): Promise<void> {
   }
 }
 
-function toggleSectionHeaderForm(): void {
-  sectionHeaderFormEl.hidden = !sectionHeaderFormEl.hidden;
-
-  if (!sectionHeaderFormEl.hidden) {
-    sectionStartCellInputEl.focus();
-  }
-}
-
-async function handleInsertSectionHeader(): Promise<void> {
-  const result = getSectionHeaderSpecFromForm();
+async function handleCreateControlsSheet(): Promise<void> {
+  const result = getControlsSheetSpecFromForm();
   if (!result.ok) {
     setStatus(result.error, "error");
     return;
   }
 
-  setStatus("Adding section header...", "info");
+  setStatus('Creating "Controls" sheet...', "info");
 
   try {
-    await insertSectionHeader(result.spec);
-    setStatus(
-      `Added "${result.spec.title}" section header at ${result.spec.startCell}.`,
-      "info"
-    );
+    await createControlsSheet(result.spec);
+    setStatus('Created "Controls" sheet.', "info");
   } catch (error) {
     setStatus(getErrorMessage(error), "error");
   }
 }
 
-type SectionHeaderFormResult =
-  | { ok: true; spec: SectionHeaderSpec }
+type ControlsSheetFormResult =
+  | { ok: true; spec: ControlsSheetSpec }
   | { ok: false; error: string };
 
-function getSectionHeaderSpecFromForm(): SectionHeaderFormResult {
-  setStartCellError("");
-
-  const startCellInput = sectionStartCellInputEl.value.trim().toUpperCase();
-  if (!startCellInput) {
-    setStartCellError("Enter a start cell like B7.");
-    return { ok: false, error: "Start cell is required." };
+function getControlsSheetSpecFromForm(): ControlsSheetFormResult {
+  const constantsColumns = parsePositiveInt(constantsColumnsInputEl.value);
+  if (constantsColumns === null) {
+    return { ok: false, error: "Columns for constants must be a whole number of 1 or greater." };
   }
 
-  const parsedStartCell = parseA1CellAddress(startCellInput);
-  if (!parsedStartCell) {
-    setStartCellError("Use a single-cell A1 address like B7.");
-    return { ok: false, error: "Start cell must be a single-cell address like B7." };
+  const timelineColumns = parsePositiveInt(timelineColumnsInputEl.value);
+  if (timelineColumns === null) {
+    return { ok: false, error: "Columns for timeline must be a whole number of 1 or greater." };
   }
 
-  const title = sectionTitleInputEl.value.trim();
-  if (!title) {
-    return { ok: false, error: "Enter a title for the section header." };
+  const totalColumns = constantsColumns + timelineColumns;
+  if (totalColumns > MAX_EXCEL_COLUMNS) {
+    return { ok: false, error: "Total model columns exceed Excel column limits." };
   }
 
-  const rows = parsePositiveInt(sectionRowsInputEl.value);
-  if (rows === null) {
-    return { ok: false, error: "Rows must be a whole number of 1 or greater." };
-  }
-
-  const columns = parsePositiveInt(sectionColumnsInputEl.value);
-  if (columns === null) {
-    return { ok: false, error: "Columns must be a whole number of 1 or greater." };
-  }
-
-  const endRow = parsedStartCell.row + rows - 1;
-  const endColumn = parsedStartCell.column + columns - 1;
-  if (endRow > MAX_EXCEL_ROWS || endColumn > MAX_EXCEL_COLUMNS) {
-    return {
-      ok: false,
-      error: "Section header would exceed worksheet limits. Adjust the start cell or size.",
-    };
-  }
-
-  const fillColor = sectionFillColorInputEl.value.trim();
-  if (!isValidHexColor(fillColor)) {
-    return { ok: false, error: "Background color must be a valid hex value (e.g., #FFD966)." };
-  }
-
-  const fontName = sectionFontNameInputEl.value.trim();
+  const fontName = modelFontNameInputEl.value.trim();
   if (!fontName) {
     return { ok: false, error: "Font name is required." };
   }
 
-  const fontSize = parsePositiveNumber(sectionFontSizeInputEl.value);
-  if (fontSize === null) {
-    return { ok: false, error: "Font size must be a number greater than 0." };
-  }
-
-  const fontColor = sectionFontColorInputEl.value.trim();
+  const fontColor = modelFontColorInputEl.value.trim();
   if (!isValidHexColor(fontColor)) {
     return { ok: false, error: "Font color must be a valid hex value (e.g., #000000)." };
   }
 
-  const horizontalValue = sectionHorizontalAlignEl.value;
-  const horizontalAlignment = horizontalValue === "center" ? "center" : "left";
+  const fontSize = parsePositiveNumber(modelFontSizeInputEl.value);
+  if (fontSize === null) {
+    return { ok: false, error: "Font size must be a number greater than 0." };
+  }
 
-  const verticalValue = sectionVerticalAlignEl.value;
-  const verticalAlignment = verticalValue === "center" ? "center" : "center";
+  const headerRows = parsePositiveInt(modelHeaderRowsInputEl.value);
+  if (headerRows === null) {
+    return { ok: false, error: "Number of rows for sheet header must be 1 or greater." };
+  }
 
-  const borderValue = sectionBorderEl.value;
-  const border = borderValue === "none" ? "none" : "thin";
+  const headerFillColor = modelHeaderBackgroundInputEl.value.trim();
+  if (!isValidHexColor(headerFillColor)) {
+    return { ok: false, error: "Sheet header background must be a valid hex value." };
+  }
+
+  const widthA = parseNonNegativeNumber(widthColAInputEl.value);
+  const widthB = parseNonNegativeNumber(widthColBInputEl.value);
+  const widthC = parseNonNegativeNumber(widthColCInputEl.value);
+  const widthD = parseNonNegativeNumber(widthColDInputEl.value);
+  const widthE = parseNonNegativeNumber(widthColEInputEl.value);
+  const widthF = parseNonNegativeNumber(widthColFInputEl.value);
+  const widthG = parseNonNegativeNumber(widthColGInputEl.value);
+  const widthH = parseNonNegativeNumber(widthColHInputEl.value);
+  const widthI = parseNonNegativeNumber(widthColIInputEl.value);
+  const widthJ = parseNonNegativeNumber(widthColJInputEl.value);
+
+  if (
+    widthA === null ||
+    widthB === null ||
+    widthC === null ||
+    widthD === null ||
+    widthE === null ||
+    widthF === null ||
+    widthG === null ||
+    widthH === null ||
+    widthI === null ||
+    widthJ === null
+  ) {
+    return { ok: false, error: "Column widths must be numbers of 0 or greater." };
+  }
 
   return {
     ok: true,
     spec: {
-      startCell: startCellInput,
-      title,
-      rows,
-      columns,
-      fillColor,
+      constantsColumns,
+      timelineColumns,
       font: {
         name: fontName,
-        size: fontSize,
-        bold: sectionFontBoldInputEl.checked,
         color: fontColor,
+        size: fontSize,
       },
-      alignment: {
-        horizontal: horizontalAlignment,
-        vertical: verticalAlignment,
+      headerRows,
+      headerFillColor,
+      columnWidths: {
+        A: widthA,
+        B: widthB,
+        C: widthC,
+        D: widthD,
+        E: widthE,
+        F: widthF,
+        G: widthG,
+        H: widthH,
+        I: widthI,
+        J: widthJ,
       },
-      border,
     },
   };
 }
@@ -349,46 +344,13 @@ function parsePositiveNumber(value: string): number | null {
   return parsed;
 }
 
-type CellAddress = {
-  row: number;
-  column: number;
-};
-
-function parseA1CellAddress(value: string): CellAddress | null {
-  if (value.includes(":") || value.includes("!")) {
+function parseNonNegativeNumber(value: string): number | null {
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed) || parsed < 0) {
     return null;
   }
 
-  const match = /^([A-Z]{1,3})([1-9][0-9]*)$/.exec(value);
-  if (!match) {
-    return null;
-  }
-
-  const column = columnLettersToNumber(match[1]);
-  const row = Number(match[2]);
-  if (!Number.isFinite(row) || row < 1) {
-    return null;
-  }
-
-  if (column < 1 || column > MAX_EXCEL_COLUMNS || row > MAX_EXCEL_ROWS) {
-    return null;
-  }
-
-  return { row, column };
-}
-
-function columnLettersToNumber(letters: string): number {
-  let value = 0;
-  for (let i = 0; i < letters.length; i += 1) {
-    value = value * 26 + (letters.charCodeAt(i) - 64);
-  }
-
-  return value;
-}
-
-function setStartCellError(message: string): void {
-  sectionStartCellErrorEl.textContent = message;
-  sectionStartCellErrorEl.hidden = message.length === 0;
+  return parsed;
 }
 
 function isValidHexColor(value: string): boolean {

@@ -60,6 +60,24 @@ body {
   font-weight: 600;
 }
 
+.template-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.template-section-title {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.template-subsection-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: #605e5c;
+}
+
 .collapsible {
   border: 1px solid #edebe9;
   border-radius: 4px;
@@ -172,6 +190,10 @@ body {
 
 .form-row .form-field--checkbox {
   flex: 0 0 auto;
+}
+
+.form-field--compact {
+  flex: 1 1 100px;
 }
 
 .form-label {
