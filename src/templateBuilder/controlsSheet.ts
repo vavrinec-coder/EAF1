@@ -35,6 +35,7 @@ export type ControlsSheetSpec = {
     timelineStartDate: Date;
     actualsEndDate: Date;
     timelineLength: number;
+    financialYearEndMonth: number;
   };
 };
 
@@ -101,26 +102,38 @@ export async function createControlsSheet(spec: ControlsSheetSpec): Promise<void
     timeRange.values = timeValues;
 
     const constantsStartRow = spec.constantsBlock.startRow;
-    const labelRange = sheet.getRangeByIndexes(constantsStartRow - 1, 1, 5, 1);
+    const labelRange = sheet.getRangeByIndexes(constantsStartRow - 1, 1, 7, 1);
     labelRange.values = [
       ["Timeline Start Date"],
       ["Actuals End Date"],
       ["Forecast Start Date"],
       ["Timeline length"],
       ["Forecast End Date"],
+      ["Financial Year End (month)"],
+      ["Last Actual Period Column number"],
     ];
     labelRange.format.horizontalAlignment = Excel.HorizontalAlignment.left;
 
-    const unitRange = sheet.getRangeByIndexes(constantsStartRow - 1, 8, 5, 1);
-    unitRange.values = [["Date"], ["Date"], ["Date"], ["#months"], ["Date"]];
+    const unitRange = sheet.getRangeByIndexes(constantsStartRow - 1, 8, 7, 1);
+    unitRange.values = [
+      ["Date"],
+      ["Date"],
+      ["Date"],
+      ["#months"],
+      ["Date"],
+      ["month"],
+      ["#"],
+    ];
     unitRange.format.horizontalAlignment = Excel.HorizontalAlignment.left;
 
-    const valueRange = sheet.getRangeByIndexes(constantsStartRow - 1, 2, 5, 1);
+    const valueRange = sheet.getRangeByIndexes(constantsStartRow - 1, 2, 7, 1);
     valueRange.values = [
       [toExcelDateSerial(spec.constantsBlock.timelineStartDate)],
       [toExcelDateSerial(spec.constantsBlock.actualsEndDate)],
       [null],
       [spec.constantsBlock.timelineLength],
+      [null],
+      [spec.constantsBlock.financialYearEndMonth],
       [null],
     ];
     valueRange.format.horizontalAlignment = Excel.HorizontalAlignment.right;
@@ -130,8 +143,10 @@ export async function createControlsSheet(spec: ControlsSheetSpec): Promise<void
     const row3 = constantsStartRow + 2;
     const row4 = constantsStartRow + 3;
     const row5 = constantsStartRow + 4;
+    const row7 = constantsStartRow + 6;
     sheet.getRange(`C${row3}`).formulas = [[`=C${row2}+1`]];
     sheet.getRange(`C${row5}`).formulas = [[`=EOMONTH(C${row1},C${row4}-1)`]];
+    sheet.getRange(`C${row7}`).formulas = [[`=ROUND((C${row2}-C${row1})/30,0)`]];
 
     sheet.getRange(`C${row1}`).format.font.color = "#3333FF";
     sheet.getRange(`C${row2}`).format.font.color = "#3333FF";
@@ -143,10 +158,6 @@ export async function createControlsSheet(spec: ControlsSheetSpec): Promise<void
     sheet.getRange(`C${row2}`).numberFormat = [[DATE_NUMBER_FORMAT]];
     sheet.getRange(`C${row3}`).numberFormat = [[DATE_NUMBER_FORMAT]];
     sheet.getRange(`C${row5}`).numberFormat = [[DATE_NUMBER_FORMAT]];
-
-    applyThinOutline(sheet.getRangeByIndexes(constantsStartRow - 1, 2, 5, 1));
-    applyThinOutline(sheet.getRange(`C${row3}`));
-    applyThinOutline(sheet.getRange(`C${row5}`));
 
     sheet.activate();
     await context.sync();
@@ -172,22 +183,6 @@ function applyColumnWidths(
 
   columns.forEach(([column, width]) => {
     sheet.getRange(`${column}:${column}`).format.columnWidth = toColumnWidthPoints(width);
-  });
-}
-
-function applyThinOutline(range: Excel.Range): void {
-  const edges = [
-    Excel.BorderIndex.edgeTop,
-    Excel.BorderIndex.edgeBottom,
-    Excel.BorderIndex.edgeLeft,
-    Excel.BorderIndex.edgeRight,
-  ];
-
-  edges.forEach((edge) => {
-    const border = range.format.borders.getItem(edge);
-    border.style = Excel.BorderLineStyle.continuous;
-    border.weight = Excel.BorderWeight.thin;
-    border.color = "#000000";
   });
 }
 

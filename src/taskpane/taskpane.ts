@@ -36,6 +36,7 @@ let constantsStartRowInputEl: HTMLInputElement;
 let constantsTimelineLengthInputEl: HTMLInputElement;
 let constantsStartDateInputEl: HTMLInputElement;
 let constantsActualsEndInputEl: HTMLInputElement;
+let constantsYearEndMonthInputEl: HTMLSelectElement;
 
 let timeHeaderColumnsDirty = false;
 let timelineLengthDirty = false;
@@ -91,6 +92,9 @@ Office.onReady((info) => {
   ) as HTMLInputElement;
   constantsStartDateInputEl = document.getElementById("constants-start-date") as HTMLInputElement;
   constantsActualsEndInputEl = document.getElementById("constants-actuals-end") as HTMLInputElement;
+  constantsYearEndMonthInputEl = document.getElementById(
+    "constants-year-end-month"
+  ) as HTMLSelectElement;
 
   loadButton.addEventListener("click", () => {
     void handleLoadSelection();
@@ -355,13 +359,18 @@ function getControlsSheetSpecFromForm(): ControlsSheetFormResult {
   if (constantsStartRow === null) {
     return { ok: false, error: "Constants start row must be a whole number of 1 or greater." };
   }
-  if (constantsStartRow + 4 > MAX_EXCEL_ROWS) {
+  if (constantsStartRow + 6 > MAX_EXCEL_ROWS) {
     return { ok: false, error: "Constants block exceeds worksheet row limits." };
   }
 
   const constantsTimelineLength = parsePositiveInt(constantsTimelineLengthInputEl.value);
   if (constantsTimelineLength === null) {
     return { ok: false, error: "Timeline length must be a whole number of 1 or greater." };
+  }
+
+  const financialYearEndMonth = parsePositiveInt(constantsYearEndMonthInputEl.value);
+  if (financialYearEndMonth === null || financialYearEndMonth > 12) {
+    return { ok: false, error: "Financial Year End month must be between 1 and 12." };
   }
 
   const timelineStartDate = parseDateInput(constantsStartDateInputEl.value);
@@ -437,6 +446,7 @@ function getControlsSheetSpecFromForm(): ControlsSheetFormResult {
         timelineStartDate,
         actualsEndDate,
         timelineLength: constantsTimelineLength,
+        financialYearEndMonth,
       },
     },
   };
