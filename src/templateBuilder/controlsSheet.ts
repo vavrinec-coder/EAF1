@@ -157,21 +157,21 @@ function applyColumnWidths(
   sheet: Excel.Worksheet,
   widths: ControlsSheetSpec["columnWidths"]
 ): void {
-  const entries: number[] = [
-    widths.A,
-    widths.B,
-    widths.C,
-    widths.D,
-    widths.E,
-    widths.F,
-    widths.G,
-    widths.H,
-    widths.I,
-    widths.J,
+  const columns: Array<[string, number]> = [
+    ["A", widths.A],
+    ["B", widths.B],
+    ["C", widths.C],
+    ["D", widths.D],
+    ["E", widths.E],
+    ["F", widths.F],
+    ["G", widths.G],
+    ["H", widths.H],
+    ["I", widths.I],
+    ["J", widths.J],
   ];
 
-  entries.forEach((width, index) => {
-    sheet.getRangeByIndexes(0, index, 1, 1).columnWidth = width;
+  columns.forEach(([column, width]) => {
+    sheet.getRange(`${column}:${column}`).format.columnWidth = width;
   });
 }
 
