@@ -31,116 +31,216 @@
     <main id="app-body" class="task-body" style="display: none;">
         <div class="section template-builder">
             <h2 class="template-builder-title">Template Builder</h2>
-            <div class="template-card">
-                <h3 class="template-section-title">Model Settings</h3>
-                <div class="template-form">
-                    <div class="form-row">
-                        <div class="form-field">
-                            <label class="form-label" for="model-constants-columns">Columns for constants</label>
-                            <input
-                                id="model-constants-columns"
-                                class="form-input"
-                                type="number"
-                                min="1"
-                                value="10"
-                            />
+            <details class="collapsible" open>
+                <summary class="collapsible-summary">Model settings</summary>
+                <div class="collapsible-body">
+                    <div class="template-form">
+                        <div class="form-row">
+                            <div class="form-field">
+                                <label class="form-label" for="model-constants-columns">Columns for constants</label>
+                                <input
+                                    id="model-constants-columns"
+                                    class="form-input"
+                                    type="number"
+                                    min="1"
+                                    value="10"
+                                />
+                            </div>
+                            <div class="form-field">
+                                <label class="form-label" for="model-timeline-columns">Columns for timeline</label>
+                                <input
+                                    id="model-timeline-columns"
+                                    class="form-input"
+                                    type="number"
+                                    min="1"
+                                    value="60"
+                                />
+                            </div>
                         </div>
-                        <div class="form-field">
-                            <label class="form-label" for="model-timeline-columns">Columns for timeline</label>
-                            <input
-                                id="model-timeline-columns"
-                                class="form-input"
-                                type="number"
-                                min="1"
-                                value="60"
-                            />
+                        <div class="form-row">
+                            <div class="form-field">
+                                <label class="form-label" for="model-font-name">Font name</label>
+                                <input id="model-font-name" class="form-input" type="text" value="Verdana" />
+                            </div>
+                            <div class="form-field">
+                                <label class="form-label" for="model-font-color">Font color</label>
+                                <input id="model-font-color" class="form-input" type="text" value="#000000" />
+                            </div>
                         </div>
-                    </div>
-                    <div class="form-row">
-                        <div class="form-field">
-                            <label class="form-label" for="model-font-name">Font name</label>
-                            <input id="model-font-name" class="form-input" type="text" value="Verdana" />
+                        <div class="form-row">
+                            <div class="form-field">
+                                <label class="form-label" for="model-font-size">Font size</label>
+                                <input id="model-font-size" class="form-input" type="number" min="1" value="10" />
+                            </div>
+                            <div class="form-field">
+                                <label class="form-label" for="model-header-rows">Number of rows for sheet header</label>
+                                <input id="model-header-rows" class="form-input" type="number" min="1" value="4" />
+                            </div>
+                            <div class="form-field">
+                                <label class="form-label" for="model-header-background">Background color for sheet header</label>
+                                <input
+                                    id="model-header-background"
+                                    class="form-input"
+                                    type="text"
+                                    value="#000000"
+                                />
+                            </div>
                         </div>
-                        <div class="form-field">
-                            <label class="form-label" for="model-font-color">Font color</label>
-                            <input id="model-font-color" class="form-input" type="text" value="#000000" />
+                        <div class="template-subsection-title">Global Column Widths</div>
+                        <div class="form-row">
+                            <div class="form-field form-field--compact">
+                                <label class="form-label" for="width-col-a">Column A width</label>
+                                <input id="width-col-a" class="form-input" type="number" min="0" value="1" />
+                            </div>
+                            <div class="form-field form-field--compact">
+                                <label class="form-label" for="width-col-b">Column B width</label>
+                                <input id="width-col-b" class="form-input" type="number" min="0" value="30" />
+                            </div>
+                            <div class="form-field form-field--compact">
+                                <label class="form-label" for="width-col-c">Column C width</label>
+                                <input id="width-col-c" class="form-input" type="number" min="0" value="12" />
+                            </div>
+                            <div class="form-field form-field--compact">
+                                <label class="form-label" for="width-col-d">Column D width</label>
+                                <input id="width-col-d" class="form-input" type="number" min="0" value="12" />
+                            </div>
+                            <div class="form-field form-field--compact">
+                                <label class="form-label" for="width-col-e">Column E width</label>
+                                <input id="width-col-e" class="form-input" type="number" min="0" value="1" />
+                            </div>
                         </div>
-                    </div>
-                    <div class="form-row">
-                        <div class="form-field">
-                            <label class="form-label" for="model-font-size">Font size</label>
-                            <input id="model-font-size" class="form-input" type="number" min="1" value="10" />
-                        </div>
-                        <div class="form-field">
-                            <label class="form-label" for="model-header-rows">Number of rows for sheet header</label>
-                            <input id="model-header-rows" class="form-input" type="number" min="1" value="4" />
-                        </div>
-                        <div class="form-field">
-                            <label class="form-label" for="model-header-background">Background color for sheet header</label>
-                            <input
-                                id="model-header-background"
-                                class="form-input"
-                                type="text"
-                                value="#000000"
-                            />
-                        </div>
-                    </div>
-                    <div class="template-subsection-title">Global Column Widths</div>
-                    <div class="form-row">
-                        <div class="form-field form-field--compact">
-                            <label class="form-label" for="width-col-a">Column A width</label>
-                            <input id="width-col-a" class="form-input" type="number" min="0" value="1" />
-                        </div>
-                        <div class="form-field form-field--compact">
-                            <label class="form-label" for="width-col-b">Column B width</label>
-                            <input id="width-col-b" class="form-input" type="number" min="0" value="30" />
-                        </div>
-                        <div class="form-field form-field--compact">
-                            <label class="form-label" for="width-col-c">Column C width</label>
-                            <input id="width-col-c" class="form-input" type="number" min="0" value="12" />
-                        </div>
-                        <div class="form-field form-field--compact">
-                            <label class="form-label" for="width-col-d">Column D width</label>
-                            <input id="width-col-d" class="form-input" type="number" min="0" value="12" />
-                        </div>
-                        <div class="form-field form-field--compact">
-                            <label class="form-label" for="width-col-e">Column E width</label>
-                            <input id="width-col-e" class="form-input" type="number" min="0" value="1" />
-                        </div>
-                    </div>
-                    <div class="form-row">
-                        <div class="form-field form-field--compact">
-                            <label class="form-label" for="width-col-f">Column F width</label>
-                            <input id="width-col-f" class="form-input" type="number" min="0" value="1" />
-                        </div>
-                        <div class="form-field form-field--compact">
-                            <label class="form-label" for="width-col-g">Column G width</label>
-                            <input id="width-col-g" class="form-input" type="number" min="0" value="1" />
-                        </div>
-                        <div class="form-field form-field--compact">
-                            <label class="form-label" for="width-col-h">Column H width</label>
-                            <input id="width-col-h" class="form-input" type="number" min="0" value="1" />
-                        </div>
-                        <div class="form-field form-field--compact">
-                            <label class="form-label" for="width-col-i">Column I width</label>
-                            <input id="width-col-i" class="form-input" type="number" min="0" value="10" />
-                        </div>
-                        <div class="form-field form-field--compact">
-                            <label class="form-label" for="width-col-j">Column J width</label>
-                            <input id="width-col-j" class="form-input" type="number" min="0" value="1" />
+                        <div class="form-row">
+                            <div class="form-field form-field--compact">
+                                <label class="form-label" for="width-col-f">Column F width</label>
+                                <input id="width-col-f" class="form-input" type="number" min="0" value="1" />
+                            </div>
+                            <div class="form-field form-field--compact">
+                                <label class="form-label" for="width-col-g">Column G width</label>
+                                <input id="width-col-g" class="form-input" type="number" min="0" value="1" />
+                            </div>
+                            <div class="form-field form-field--compact">
+                                <label class="form-label" for="width-col-h">Column H width</label>
+                                <input id="width-col-h" class="form-input" type="number" min="0" value="1" />
+                            </div>
+                            <div class="form-field form-field--compact">
+                                <label class="form-label" for="width-col-i">Column I width</label>
+                                <input id="width-col-i" class="form-input" type="number" min="0" value="10" />
+                            </div>
+                            <div class="form-field form-field--compact">
+                                <label class="form-label" for="width-col-j">Column J width</label>
+                                <input id="width-col-j" class="form-input" type="number" min="0" value="1" />
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
-            <div class="template-card">
-                <h3 class="template-section-title">Controls</h3>
-                <p class="form-hint">Create or overwrite the Controls sheet using the model settings.</p>
-                <div class="form-actions">
-                    <button id="create-controls-sheet" class="ms-Button ms-Button--primary" type="button">
-                        <span class="ms-Button-label">Create Controls sheet</span>
-                    </button>
+            </details>
+            <details class="collapsible" open>
+                <summary class="collapsible-summary">Controls sheet</summary>
+                <div class="collapsible-body">
+                    <p class="form-hint">Create or overwrite the Controls sheet using the model settings.</p>
+                    <div class="form-actions">
+                        <button id="create-controls-sheet" class="ms-Button ms-Button--primary" type="button">
+                            <span class="ms-Button-label">Create Controls sheet</span>
+                        </button>
+                    </div>
+                    <details class="collapsible collapsible--nested">
+                        <summary class="collapsible-summary">TIME section header</summary>
+                        <div class="collapsible-body">
+                            <div class="template-form">
+                                <div class="form-row">
+                                    <div class="form-field">
+                                        <label class="form-label" for="time-header-start-cell">Start cell</label>
+                                        <input id="time-header-start-cell" class="form-input" type="text" value="A6" />
+                                    </div>
+                                    <div class="form-field">
+                                        <label class="form-label" for="time-header-title">Title text</label>
+                                        <input id="time-header-title" class="form-input" type="text" value="TIME" />
+                                    </div>
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-field">
+                                        <label class="form-label" for="time-header-rows">Rows</label>
+                                        <input id="time-header-rows" class="form-input" type="number" min="1" value="1" />
+                                    </div>
+                                    <div class="form-field">
+                                        <label class="form-label" for="time-header-columns">Columns</label>
+                                        <input
+                                            id="time-header-columns"
+                                            class="form-input"
+                                            type="number"
+                                            min="1"
+                                            value="70"
+                                        />
+                                    </div>
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-field">
+                                        <label class="form-label" for="time-header-fill">Background color</label>
+                                        <input
+                                            id="time-header-fill"
+                                            class="form-input"
+                                            type="text"
+                                            value="#FFD966"
+                                        />
+                                    </div>
+                                    <div class="form-field">
+                                        <label class="form-label" for="time-header-font-color">Font color</label>
+                                        <input
+                                            id="time-header-font-color"
+                                            class="form-input"
+                                            type="text"
+                                            value="#000000"
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </details>
+                    <details class="collapsible collapsible--nested">
+                        <summary class="collapsible-summary">Constants block</summary>
+                        <div class="collapsible-body">
+                            <div class="template-form">
+                                <div class="form-row">
+                                    <div class="form-field">
+                                        <label class="form-label" for="constants-start-row">Start row</label>
+                                        <input id="constants-start-row" class="form-input" type="number" min="1" value="8" />
+                                    </div>
+                                    <div class="form-field">
+                                        <label class="form-label" for="constants-timeline-length">Timeline length</label>
+                                        <input
+                                            id="constants-timeline-length"
+                                            class="form-input"
+                                            type="number"
+                                            min="1"
+                                            value="60"
+                                        />
+                                    </div>
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-field">
+                                        <label class="form-label" for="constants-start-date">Timeline Start Date</label>
+                                        <input
+                                            id="constants-start-date"
+                                            class="form-input"
+                                            type="date"
+                                            value="2023-01-01"
+                                        />
+                                    </div>
+                                    <div class="form-field">
+                                        <label class="form-label" for="constants-actuals-end">Actuals End Date</label>
+                                        <input
+                                            id="constants-actuals-end"
+                                            class="form-input"
+                                            type="date"
+                                            value="2025-04-30"
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </details>
                 </div>
-            </div>
+            </details>
         </div>
 
         <details class="collapsible">

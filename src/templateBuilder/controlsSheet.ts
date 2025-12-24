@@ -22,10 +22,25 @@ export type ControlsSheetSpec = {
     I: number;
     J: number;
   };
+  timeHeader: {
+    startCell: string;
+    title: string;
+    rows: number;
+    columns: number;
+    fillColor: string;
+    fontColor: string;
+  };
+  constantsBlock: {
+    startRow: number;
+    timelineStartDate: Date;
+    actualsEndDate: Date;
+    timelineLength: number;
+  };
 };
 
 const DEFAULT_SHEET_RANGE = "A1:ZZ200";
 const COLUMN_HIDE_LIMIT = 200;
+const DATE_NUMBER_FORMAT = "[$-en-US]d/mmm/yy;@";
 
 export async function createControlsSheet(spec: ControlsSheetSpec): Promise<void> {
   await Excel.run(async (context) => {
@@ -70,14 +85,23 @@ export async function createControlsSheet(spec: ControlsSheetSpec): Promise<void
     const headerRange = sheet.getRangeByIndexes(0, 0, spec.headerRows, totalModelColumns);
     headerRange.format.fill.color = spec.headerFillColor;
 
-    const timeRange = sheet.getRangeByIndexes(5, 0, 1, totalModelColumns);
-    timeRange.format.fill.color = "#FFD966";
+    const timeAnchor = sheet.getRange(spec.timeHeader.startCell);
+    const timeRange = timeAnchor.getResizedRange(
+      spec.timeHeader.rows - 1,
+      spec.timeHeader.columns - 1
+    );
+    timeRange.format.fill.color = spec.timeHeader.fillColor;
     timeRange.format.font.name = spec.font.name;
-    timeRange.format.font.color = "#000000";
-    const timeValues = [Array.from({ length: totalModelColumns }, (_, index) => (index === 0 ? "TIME" : ""))];
+    timeRange.format.font.color = spec.timeHeader.fontColor;
+    const timeValues: string[][] = Array.from({ length: spec.timeHeader.rows }, (_, rowIndex) =>
+      Array.from({ length: spec.timeHeader.columns }, (_, columnIndex) =>
+        rowIndex === 0 && columnIndex === 0 ? spec.timeHeader.title : ""
+      )
+    );
     timeRange.values = timeValues;
 
-    const labelRange = sheet.getRange("B8:B12");
+    const constantsStartRow = spec.constantsBlock.startRow;
+    const labelRange = sheet.getRangeByIndexes(constantsStartRow - 1, 1, 5, 1);
     labelRange.values = [
       ["Timeline Start Date"],
       ["Actuals End Date"],
@@ -87,36 +111,43 @@ export async function createControlsSheet(spec: ControlsSheetSpec): Promise<void
     ];
     labelRange.format.horizontalAlignment = Excel.HorizontalAlignment.left;
 
-    const unitRange = sheet.getRange("I8:I12");
+    const unitRange = sheet.getRangeByIndexes(constantsStartRow - 1, 8, 5, 1);
     unitRange.values = [["Date"], ["Date"], ["Date"], ["#months"], ["Date"]];
     unitRange.format.horizontalAlignment = Excel.HorizontalAlignment.left;
 
-    const valueRange = sheet.getRange("C8:C12");
+    const valueRange = sheet.getRangeByIndexes(constantsStartRow - 1, 2, 5, 1);
     valueRange.values = [
-      [new Date(2023, 0, 1)],
+      [spec.constantsBlock.timelineStartDate],
+      [spec.constantsBlock.actualsEndDate],
       [null],
-      [null],
-      [spec.timelineColumns],
+      [spec.constantsBlock.timelineLength],
       [null],
     ];
     valueRange.format.horizontalAlignment = Excel.HorizontalAlignment.right;
 
-    sheet.getRange("C9").formulas = [["=C8+1"]];
-    sheet.getRange("C10").formulas = [["=C9+1"]];
-    sheet.getRange("C12").formulas = [["=EOMONTH(C8,C11-1)"]];
+    const row1 = constantsStartRow;
+    const row2 = constantsStartRow + 1;
+    const row3 = constantsStartRow + 2;
+    const row4 = constantsStartRow + 3;
+    const row5 = constantsStartRow + 4;
+    sheet.getRange(`C${row3}`).formulas = [[`=C${row2}+1`]];
+    sheet.getRange(`C${row5}`).formulas = [[`=EOMONTH(C${row1},C${row4}-1)`]];
 
-    sheet.getRange("C8").format.font.color = "#3333FF";
-    sheet.getRange("C9").format.font.color = "#3333FF";
-    sheet.getRange("C11").format.font.color = "#3333FF";
-    sheet.getRange("C10").format.font.color = "#000000";
-    sheet.getRange("C12").format.font.color = "#000000";
+    sheet.getRange(`C${row1}`).format.font.color = "#3333FF";
+    sheet.getRange(`C${row2}`).format.font.color = "#3333FF";
+    sheet.getRange(`C${row4}`).format.font.color = "#3333FF";
+    sheet.getRange(`C${row3}`).format.font.color = "#000000";
+    sheet.getRange(`C${row5}`).format.font.color = "#000000";
 
-    sheet.getRange("C8:C10").numberFormat = Array.from({ length: 3 }, () => ["m/d/yyyy"]);
-    sheet.getRange("C12").numberFormat = [["m/d/yyyy"]];
+    sheet.getRangeByIndexes(constantsStartRow - 1, 2, 3, 1).numberFormat =
+      Array.from({ length: 3 }, () => [DATE_NUMBER_FORMAT]);
+    sheet.getRangeByIndexes(constantsStartRow + 3, 2, 1, 1).numberFormat = [
+      [DATE_NUMBER_FORMAT],
+    ];
 
-    applyThinOutline(sheet.getRange("C8:C12"));
-    applyThinOutline(sheet.getRange("C10"));
-    applyThinOutline(sheet.getRange("C12"));
+    applyThinOutline(sheet.getRangeByIndexes(constantsStartRow - 1, 2, 5, 1));
+    applyThinOutline(sheet.getRange(`C${row3}`));
+    applyThinOutline(sheet.getRange(`C${row5}`));
 
     sheet.activate();
     await context.sync();
@@ -127,21 +158,21 @@ function applyColumnWidths(
   sheet: Excel.Worksheet,
   widths: ControlsSheetSpec["columnWidths"]
 ): void {
-  const entries: Array<[string, number]> = [
-    ["A", widths.A],
-    ["B", widths.B],
-    ["C", widths.C],
-    ["D", widths.D],
-    ["E", widths.E],
-    ["F", widths.F],
-    ["G", widths.G],
-    ["H", widths.H],
-    ["I", widths.I],
-    ["J", widths.J],
+  const entries: number[] = [
+    widths.A,
+    widths.B,
+    widths.C,
+    widths.D,
+    widths.E,
+    widths.F,
+    widths.G,
+    widths.H,
+    widths.I,
+    widths.J,
   ];
 
-  entries.forEach(([column, width]) => {
-    sheet.getRange(`${column}:${column}`).columnWidth = width;
+  entries.forEach((width, index) => {
+    sheet.getRangeByIndexes(0, index, 1, 1).columnWidth = width;
   });
 }
 

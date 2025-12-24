@@ -26,6 +26,19 @@ let widthColHInputEl: HTMLInputElement;
 let widthColIInputEl: HTMLInputElement;
 let widthColJInputEl: HTMLInputElement;
 let createControlsButtonEl: HTMLButtonElement;
+let timeHeaderStartCellInputEl: HTMLInputElement;
+let timeHeaderTitleInputEl: HTMLInputElement;
+let timeHeaderRowsInputEl: HTMLInputElement;
+let timeHeaderColumnsInputEl: HTMLInputElement;
+let timeHeaderFillInputEl: HTMLInputElement;
+let timeHeaderFontColorInputEl: HTMLInputElement;
+let constantsStartRowInputEl: HTMLInputElement;
+let constantsTimelineLengthInputEl: HTMLInputElement;
+let constantsStartDateInputEl: HTMLInputElement;
+let constantsActualsEndInputEl: HTMLInputElement;
+
+let timeHeaderColumnsDirty = false;
+let timelineLengthDirty = false;
 
 Office.onReady((info) => {
   if (info.host !== Office.HostType.Excel) {
@@ -66,6 +79,18 @@ Office.onReady((info) => {
   widthColIInputEl = document.getElementById("width-col-i") as HTMLInputElement;
   widthColJInputEl = document.getElementById("width-col-j") as HTMLInputElement;
   createControlsButtonEl = document.getElementById("create-controls-sheet") as HTMLButtonElement;
+  timeHeaderStartCellInputEl = document.getElementById("time-header-start-cell") as HTMLInputElement;
+  timeHeaderTitleInputEl = document.getElementById("time-header-title") as HTMLInputElement;
+  timeHeaderRowsInputEl = document.getElementById("time-header-rows") as HTMLInputElement;
+  timeHeaderColumnsInputEl = document.getElementById("time-header-columns") as HTMLInputElement;
+  timeHeaderFillInputEl = document.getElementById("time-header-fill") as HTMLInputElement;
+  timeHeaderFontColorInputEl = document.getElementById("time-header-font-color") as HTMLInputElement;
+  constantsStartRowInputEl = document.getElementById("constants-start-row") as HTMLInputElement;
+  constantsTimelineLengthInputEl = document.getElementById(
+    "constants-timeline-length"
+  ) as HTMLInputElement;
+  constantsStartDateInputEl = document.getElementById("constants-start-date") as HTMLInputElement;
+  constantsActualsEndInputEl = document.getElementById("constants-actuals-end") as HTMLInputElement;
 
   loadButton.addEventListener("click", () => {
     void handleLoadSelection();
@@ -76,9 +101,22 @@ Office.onReady((info) => {
   createControlsButtonEl.addEventListener("click", () => {
     void handleCreateControlsSheet();
   });
+  timeHeaderColumnsInputEl.addEventListener("input", () => {
+    timeHeaderColumnsDirty = timeHeaderColumnsInputEl.value.trim().length > 0;
+  });
+  constantsTimelineLengthInputEl.addEventListener("input", () => {
+    timelineLengthDirty = constantsTimelineLengthInputEl.value.trim().length > 0;
+  });
+  constantsColumnsInputEl.addEventListener("input", () => {
+    syncDerivedDefaults();
+  });
+  timelineColumnsInputEl.addEventListener("input", () => {
+    syncDerivedDefaults();
+  });
 
   renderHeaders([]);
   setStatus("Ready. Select a range and click Load Selection.", "info");
+  syncDerivedDefaults(true);
 });
 
 type SelectionData = {
@@ -272,6 +310,70 @@ function getControlsSheetSpecFromForm(): ControlsSheetFormResult {
     return { ok: false, error: "Sheet header background must be a valid hex value." };
   }
 
+  const timeHeaderStartCell = timeHeaderStartCellInputEl.value.trim().toUpperCase();
+  if (!timeHeaderStartCell) {
+    return { ok: false, error: "TIME header start cell is required." };
+  }
+
+  const parsedStartCell = parseA1CellAddress(timeHeaderStartCell);
+  if (!parsedStartCell) {
+    return { ok: false, error: "TIME header start cell must be a single A1 address like A6." };
+  }
+
+  const timeHeaderTitle = timeHeaderTitleInputEl.value.trim();
+  if (!timeHeaderTitle) {
+    return { ok: false, error: "TIME header title is required." };
+  }
+
+  const timeHeaderRows = parsePositiveInt(timeHeaderRowsInputEl.value);
+  if (timeHeaderRows === null) {
+    return { ok: false, error: "TIME header rows must be a whole number of 1 or greater." };
+  }
+
+  const timeHeaderColumns = parsePositiveInt(timeHeaderColumnsInputEl.value);
+  if (timeHeaderColumns === null) {
+    return { ok: false, error: "TIME header columns must be a whole number of 1 or greater." };
+  }
+
+  const timeHeaderEndRow = parsedStartCell.row + timeHeaderRows - 1;
+  const timeHeaderEndColumn = parsedStartCell.column + timeHeaderColumns - 1;
+  if (timeHeaderEndRow > MAX_EXCEL_ROWS || timeHeaderEndColumn > MAX_EXCEL_COLUMNS) {
+    return { ok: false, error: "TIME header range exceeds worksheet limits." };
+  }
+
+  const timeHeaderFill = timeHeaderFillInputEl.value.trim();
+  if (!isValidHexColor(timeHeaderFill)) {
+    return { ok: false, error: "TIME header background must be a valid hex value." };
+  }
+
+  const timeHeaderFontColor = timeHeaderFontColorInputEl.value.trim();
+  if (!isValidHexColor(timeHeaderFontColor)) {
+    return { ok: false, error: "TIME header font color must be a valid hex value." };
+  }
+
+  const constantsStartRow = parsePositiveInt(constantsStartRowInputEl.value);
+  if (constantsStartRow === null) {
+    return { ok: false, error: "Constants start row must be a whole number of 1 or greater." };
+  }
+  if (constantsStartRow + 4 > MAX_EXCEL_ROWS) {
+    return { ok: false, error: "Constants block exceeds worksheet row limits." };
+  }
+
+  const constantsTimelineLength = parsePositiveInt(constantsTimelineLengthInputEl.value);
+  if (constantsTimelineLength === null) {
+    return { ok: false, error: "Timeline length must be a whole number of 1 or greater." };
+  }
+
+  const timelineStartDate = parseDateInput(constantsStartDateInputEl.value);
+  if (!timelineStartDate) {
+    return { ok: false, error: "Timeline Start Date must be a valid date." };
+  }
+
+  const actualsEndDate = parseDateInput(constantsActualsEndInputEl.value);
+  if (!actualsEndDate) {
+    return { ok: false, error: "Actuals End Date must be a valid date." };
+  }
+
   const widthA = parseNonNegativeNumber(widthColAInputEl.value);
   const widthB = parseNonNegativeNumber(widthColBInputEl.value);
   const widthC = parseNonNegativeNumber(widthColCInputEl.value);
@@ -322,6 +424,20 @@ function getControlsSheetSpecFromForm(): ControlsSheetFormResult {
         I: widthI,
         J: widthJ,
       },
+      timeHeader: {
+        startCell: timeHeaderStartCell,
+        title: timeHeaderTitle,
+        rows: timeHeaderRows,
+        columns: timeHeaderColumns,
+        fillColor: timeHeaderFill,
+        fontColor: timeHeaderFontColor,
+      },
+      constantsBlock: {
+        startRow: constantsStartRow,
+        timelineStartDate,
+        actualsEndDate,
+        timelineLength: constantsTimelineLength,
+      },
     },
   };
 }
@@ -351,6 +467,82 @@ function parseNonNegativeNumber(value: string): number | null {
   }
 
   return parsed;
+}
+
+type CellAddress = {
+  row: number;
+  column: number;
+};
+
+function parseA1CellAddress(value: string): CellAddress | null {
+  if (value.includes(":") || value.includes("!")) {
+    return null;
+  }
+
+  const match = /^([A-Z]{1,3})([1-9][0-9]*)$/.exec(value);
+  if (!match) {
+    return null;
+  }
+
+  const column = columnLettersToNumber(match[1]);
+  const row = Number(match[2]);
+  if (!Number.isFinite(row) || row < 1) {
+    return null;
+  }
+
+  if (column < 1 || column > MAX_EXCEL_COLUMNS || row > MAX_EXCEL_ROWS) {
+    return null;
+  }
+
+  return { row, column };
+}
+
+function columnLettersToNumber(letters: string): number {
+  let value = 0;
+  for (let i = 0; i < letters.length; i += 1) {
+    value = value * 26 + (letters.charCodeAt(i) - 64);
+  }
+
+  return value;
+}
+
+function parseDateInput(value: string): Date | null {
+  if (!value) {
+    return null;
+  }
+
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
+  if (!match) {
+    return null;
+  }
+
+  const year = Number(match[1]);
+  const month = Number(match[2]);
+  const day = Number(match[3]);
+  if (!Number.isFinite(year) || !Number.isFinite(month) || !Number.isFinite(day)) {
+    return null;
+  }
+
+  return new Date(year, month - 1, day);
+}
+
+function syncDerivedDefaults(force = false): void {
+  const constantsColumns = parsePositiveInt(constantsColumnsInputEl.value);
+  const timelineColumns = parsePositiveInt(timelineColumnsInputEl.value);
+  if (constantsColumns === null || timelineColumns === null) {
+    return;
+  }
+
+  const totalColumns = constantsColumns + timelineColumns;
+  if (force || !timeHeaderColumnsDirty) {
+    timeHeaderColumnsInputEl.value = totalColumns.toString();
+    timeHeaderColumnsDirty = false;
+  }
+
+  if (force || !timelineLengthDirty) {
+    constantsTimelineLengthInputEl.value = timelineColumns.toString();
+    timelineLengthDirty = false;
+  }
 }
 
 function isValidHexColor(value: string): boolean {
