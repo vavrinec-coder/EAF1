@@ -171,7 +171,7 @@ function applyColumnWidths(
   ];
 
   columns.forEach(([column, width]) => {
-    sheet.getRange(`${column}:${column}`).format.columnWidth = width;
+    sheet.getRange(`${column}:${column}`).format.columnWidth = toColumnWidthPoints(width);
   });
 }
 
@@ -195,4 +195,9 @@ function toExcelDateSerial(date: Date): number {
   const utc = Date.UTC(date.getFullYear(), date.getMonth(), date.getDate());
   const excelEpoch = Date.UTC(1899, 11, 30);
   return (utc - excelEpoch) / 86400000;
+}
+
+function toColumnWidthPoints(width: number): number {
+  const pixels = Math.floor(width * 7 + 5);
+  return pixels * 0.75;
 }
