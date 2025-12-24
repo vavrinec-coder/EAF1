@@ -117,8 +117,8 @@ export async function createControlsSheet(spec: ControlsSheetSpec): Promise<void
 
     const valueRange = sheet.getRangeByIndexes(constantsStartRow - 1, 2, 5, 1);
     valueRange.values = [
-      [spec.constantsBlock.timelineStartDate],
-      [spec.constantsBlock.actualsEndDate],
+      [toExcelDateSerial(spec.constantsBlock.timelineStartDate)],
+      [toExcelDateSerial(spec.constantsBlock.actualsEndDate)],
       [null],
       [spec.constantsBlock.timelineLength],
       [null],
@@ -139,11 +139,10 @@ export async function createControlsSheet(spec: ControlsSheetSpec): Promise<void
     sheet.getRange(`C${row3}`).format.font.color = "#000000";
     sheet.getRange(`C${row5}`).format.font.color = "#000000";
 
-    sheet.getRangeByIndexes(constantsStartRow - 1, 2, 3, 1).numberFormat =
-      Array.from({ length: 3 }, () => [DATE_NUMBER_FORMAT]);
-    sheet.getRangeByIndexes(constantsStartRow + 3, 2, 1, 1).numberFormat = [
-      [DATE_NUMBER_FORMAT],
-    ];
+    sheet.getRange(`C${row1}`).numberFormat = [[DATE_NUMBER_FORMAT]];
+    sheet.getRange(`C${row2}`).numberFormat = [[DATE_NUMBER_FORMAT]];
+    sheet.getRange(`C${row3}`).numberFormat = [[DATE_NUMBER_FORMAT]];
+    sheet.getRange(`C${row5}`).numberFormat = [[DATE_NUMBER_FORMAT]];
 
     applyThinOutline(sheet.getRangeByIndexes(constantsStartRow - 1, 2, 5, 1));
     applyThinOutline(sheet.getRange(`C${row3}`));
@@ -190,4 +189,10 @@ function applyThinOutline(range: Excel.Range): void {
     border.weight = Excel.BorderWeight.thin;
     border.color = "#000000";
   });
+}
+
+function toExcelDateSerial(date: Date): number {
+  const utc = Date.UTC(date.getFullYear(), date.getMonth(), date.getDate());
+  const excelEpoch = Date.UTC(1899, 11, 30);
+  return (utc - excelEpoch) / 86400000;
 }
