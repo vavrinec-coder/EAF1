@@ -184,15 +184,39 @@ export async function createControlsSheet(spec: ControlsSheetSpec): Promise<void
     sheet.getRange("I21").values = [["Date"]];
 
     const timelineStartColIndex = spec.constantsColumns;
-    const timelineFormulaRangeStart = sheet.getRangeByIndexes(19, timelineStartColIndex, 1, spec.timelineColumns);
-    const timelineFormulaRangeEnd = sheet.getRangeByIndexes(20, timelineStartColIndex, 1, spec.timelineColumns);
+    const timelineFormulaRangeStart = sheet.getRangeByIndexes(
+      19,
+      timelineStartColIndex,
+      1,
+      spec.timelineColumns
+    );
+    const timelineFormulaRangeEnd = sheet.getRangeByIndexes(
+      20,
+      timelineStartColIndex,
+      1,
+      spec.timelineColumns
+    );
 
-    const startDateFormula = `=IF(ISBLANK(RC[-1]),$C$${row1},R[1]C[-1]+1)`;
-    const endDateFormula = "=EOMONTH(R[-1]C,0)";
-    timelineFormulaRangeStart.formulasR1C1 = [Array.from({ length: spec.timelineColumns }, () => startDateFormula)];
-    timelineFormulaRangeEnd.formulasR1C1 = [Array.from({ length: spec.timelineColumns }, () => endDateFormula)];
-    timelineFormulaRangeStart.numberFormat = [Array.from({ length: spec.timelineColumns }, () => DATE_NUMBER_FORMAT)];
-    timelineFormulaRangeEnd.numberFormat = [Array.from({ length: spec.timelineColumns }, () => DATE_NUMBER_FORMAT)];
+    const startDateFormulas: string[] = [];
+    const endDateFormulas: string[] = [];
+    for (let i = 0; i < spec.timelineColumns; i += 1) {
+      const columnIndex = timelineStartColIndex + i;
+      const columnLetter = columnIndexToLetters(columnIndex);
+      const prevColumnLetter = columnIndexToLetters(columnIndex - 1);
+      startDateFormulas.push(
+        `=IF(ISBLANK(${prevColumnLetter}20),$C$9,${prevColumnLetter}21+1)`
+      );
+      endDateFormulas.push(`=EOMONTH(${columnLetter}20,0)`);
+    }
+
+    timelineFormulaRangeStart.formulas = [startDateFormulas];
+    timelineFormulaRangeEnd.formulas = [endDateFormulas];
+    timelineFormulaRangeStart.numberFormat = [
+      Array.from({ length: spec.timelineColumns }, () => DATE_NUMBER_FORMAT),
+    ];
+    timelineFormulaRangeEnd.numberFormat = [
+      Array.from({ length: spec.timelineColumns }, () => DATE_NUMBER_FORMAT),
+    ];
 
     sheet.activate();
     await context.sync();
@@ -244,4 +268,17 @@ function toExcelDateSerial(date: Date): number {
 function toColumnWidthPoints(width: number): number {
   const pixels = Math.floor(width * 7 + 5);
   return pixels * 0.75;
+}
+
+function columnIndexToLetters(index: number): string {
+  let value = index + 1;
+  let letters = "";
+
+  while (value > 0) {
+    const remainder = (value - 1) % 26;
+    letters = String.fromCharCode(65 + remainder) + letters;
+    value = Math.floor((value - 1) / 26);
+  }
+
+  return letters;
 }
