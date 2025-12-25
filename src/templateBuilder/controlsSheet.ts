@@ -151,6 +151,7 @@ export async function createControlsSheet(spec: ControlsSheetSpec): Promise<void
     sheet.getRange(`C${row1}`).format.font.color = "#3333FF";
     sheet.getRange(`C${row2}`).format.font.color = "#3333FF";
     sheet.getRange(`C${row4}`).format.font.color = "#3333FF";
+    sheet.getRange(`C${row6}`).format.font.color = "#3333FF";
     sheet.getRange(`C${row3}`).format.font.color = "#000000";
     sheet.getRange(`C${row5}`).format.font.color = "#000000";
 
