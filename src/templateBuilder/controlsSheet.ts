@@ -44,6 +44,7 @@ export type ControlsSheetSpec = {
 const DEFAULT_SHEET_RANGE = "A1:ZZ200";
 const COLUMN_HIDE_LIMIT = 200;
 const DATE_NUMBER_FORMAT = "[$-en-US]d/mmm/yy;@";
+const DEFAULT_TIMELINE_COLUMN_WIDTH = 12;
 
 export async function createControlsSheet(spec: ControlsSheetSpec): Promise<void> {
   await Excel.run(async (context) => {
@@ -71,6 +72,7 @@ export async function createControlsSheet(spec: ControlsSheetSpec): Promise<void
     baseRange.format.font.color = spec.font.color;
 
     applyColumnWidths(sheet, spec.columnWidths);
+    applyTimelineColumnWidths(sheet, spec.constantsColumns, spec.timelineColumns);
 
     const visibleColumnCount = Math.min(totalModelColumns, COLUMN_HIDE_LIMIT);
     if (visibleColumnCount > 0) {
@@ -173,6 +175,25 @@ export async function createControlsSheet(spec: ControlsSheetSpec): Promise<void
     sheet.getRange(`C${row3}`).numberFormat = [[DATE_NUMBER_FORMAT]];
     sheet.getRange(`C${row5}`).numberFormat = [[DATE_NUMBER_FORMAT]];
 
+    sheet.getRange("B19").values = [["Monthly timeline"]];
+    sheet.getRange("B19").format.font.bold = true;
+
+    sheet.getRange("B20").values = [["Start Date"]];
+    sheet.getRange("B21").values = [["End Date"]];
+    sheet.getRange("I20").values = [["Date"]];
+    sheet.getRange("I21").values = [["Date"]];
+
+    const timelineStartColIndex = spec.constantsColumns;
+    const timelineFormulaRangeStart = sheet.getRangeByIndexes(19, timelineStartColIndex, 1, spec.timelineColumns);
+    const timelineFormulaRangeEnd = sheet.getRangeByIndexes(20, timelineStartColIndex, 1, spec.timelineColumns);
+
+    const startDateFormula = `=IF(ISBLANK(RC[-1]),$C$${row1},R[1]C[-1]+1)`;
+    const endDateFormula = "=EOMONTH(R[-1]C,0)";
+    timelineFormulaRangeStart.formulasR1C1 = [Array.from({ length: spec.timelineColumns }, () => startDateFormula)];
+    timelineFormulaRangeEnd.formulasR1C1 = [Array.from({ length: spec.timelineColumns }, () => endDateFormula)];
+    timelineFormulaRangeStart.numberFormat = [Array.from({ length: spec.timelineColumns }, () => DATE_NUMBER_FORMAT)];
+    timelineFormulaRangeEnd.numberFormat = [Array.from({ length: spec.timelineColumns }, () => DATE_NUMBER_FORMAT)];
+
     sheet.activate();
     await context.sync();
   });
@@ -198,6 +219,20 @@ function applyColumnWidths(
   columns.forEach(([column, width]) => {
     sheet.getRange(`${column}:${column}`).format.columnWidth = toColumnWidthPoints(width);
   });
+}
+
+function applyTimelineColumnWidths(
+  sheet: Excel.Worksheet,
+  constantsColumns: number,
+  timelineColumns: number
+): void {
+  if (timelineColumns <= 0) {
+    return;
+  }
+
+  const startIndex = constantsColumns;
+  const range = sheet.getRangeByIndexes(0, startIndex, 1, timelineColumns);
+  range.format.columnWidth = toColumnWidthPoints(DEFAULT_TIMELINE_COLUMN_WIDTH);
 }
 
 function toExcelDateSerial(date: Date): number {
