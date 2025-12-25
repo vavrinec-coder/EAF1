@@ -263,6 +263,8 @@ export async function createControlsSheet(spec: ControlsSheetSpec): Promise<void
     timelineFormulaRangeCounter.formulas = [periodCounterFormulas];
     timelineFormulaRangeYear.formulas = [financialYearFormulas];
     timelineFormulaRangeQuarter.formulas = [financialQuarterFormulas];
+    timelineFormulaRangeType.format.horizontalAlignment = Excel.HorizontalAlignment.right;
+    timelineFormulaRangeQuarter.format.horizontalAlignment = Excel.HorizontalAlignment.right;
     timelineFormulaRangeStart.numberFormat = [
       Array.from({ length: spec.timelineColumns }, () => DATE_NUMBER_FORMAT),
     ];
