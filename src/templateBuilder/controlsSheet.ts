@@ -188,7 +188,12 @@ export async function createControlsSheet(spec: ControlsSheetSpec): Promise<void
       ["Financial Year"],
       ["Financial Quarter"],
     ];
-    sheet.getRange("B28:B30").values = [["Start Date"], ["End Date"], ["Period counter"]];
+    sheet.getRange("B28:B31").values = [
+      ["Start Date"],
+      ["End Date"],
+      ["Period counter"],
+      ["Financial Quarter"],
+    ];
     sheet.getRange("I20:I25").values = [
       ["Date"],
       ["Date"],
@@ -197,7 +202,7 @@ export async function createControlsSheet(spec: ControlsSheetSpec): Promise<void
       ["Year"],
       ["Label"],
     ];
-    sheet.getRange("I28:I30").values = [["Date"], ["Date"], ["Counter"]];
+    sheet.getRange("I28:I31").values = [["Date"], ["Date"], ["Counter"], ["Label"]];
 
     const timelineStartColIndex = spec.constantsColumns;
     const timelineFormulaRangeStart = sheet.getRangeByIndexes(
@@ -255,6 +260,12 @@ export async function createControlsSheet(spec: ControlsSheetSpec): Promise<void
       1,
       quarterlyColumns
     );
+    const timelineFormulaRangeQuarterlyLabel = sheet.getRangeByIndexes(
+      30,
+      timelineStartColIndex,
+      1,
+      spec.timelineColumns
+    );
 
     const startDateFormulas: string[] = [];
     const endDateFormulas: string[] = [];
@@ -265,6 +276,13 @@ export async function createControlsSheet(spec: ControlsSheetSpec): Promise<void
     const quarterlyStartFormulas: string[] = [];
     const quarterlyEndFormulas: string[] = [];
     const quarterlyCounterFormulas: string[] = [];
+    const quarterlyLabelFormulas: string[] = [];
+    const timelineStartColumnLetter = columnIndexToLetters(timelineStartColIndex);
+    const timelineEndColumnLetter = columnIndexToLetters(
+      timelineStartColIndex + spec.timelineColumns - 1
+    );
+    const timelineQuarterRange = `$${timelineStartColumnLetter}25:$${timelineEndColumnLetter}25`;
+    const timelineMatchRange = `$${timelineStartColumnLetter}21:$${timelineEndColumnLetter}21`;
     for (let i = 0; i < spec.timelineColumns; i += 1) {
       const columnIndex = timelineStartColIndex + i;
       const columnLetter = columnIndexToLetters(columnIndex);
@@ -279,7 +297,7 @@ export async function createControlsSheet(spec: ControlsSheetSpec): Promise<void
         `=IF(MONTH(${columnLetter}21)>$C$14,YEAR(${columnLetter}21)+1,YEAR(${columnLetter}21))`
       );
       financialQuarterFormulas.push(
-        `=CHOOSE(INT(MOD(MONTH(${columnLetter}21)-$C$14-1,12)/3)+1,"Q1","Q2","Q3","Q4")`
+        `=CONCAT(CHOOSE(INT(MOD(MONTH(${columnLetter}21)-$C$14-1,12)/3)+1,"Q1","Q2","Q3","Q4")," ",${columnLetter}24)`
       );
       quarterlyStartFormulas.push(
         `=IF(ISBLANK(${prevColumnLetter}28),$C$9,${prevColumnLetter}29+1)`
@@ -287,6 +305,9 @@ export async function createControlsSheet(spec: ControlsSheetSpec): Promise<void
       quarterlyEndFormulas.push(`=EOMONTH(${columnLetter}28,2)`);
       quarterlyCounterFormulas.push(
         `=IF(ISBLANK(${prevColumnLetter}30),1,${prevColumnLetter}30+1)`
+      );
+      quarterlyLabelFormulas.push(
+        `=INDEX(${timelineQuarterRange},MATCH(${columnLetter}29,${timelineMatchRange},0))`
       );
     }
 
@@ -301,6 +322,7 @@ export async function createControlsSheet(spec: ControlsSheetSpec): Promise<void
     timelineFormulaRangeQuarterlyCounter.formulas = [
       quarterlyCounterFormulas.slice(0, quarterlyColumns),
     ];
+    timelineFormulaRangeQuarterlyLabel.formulas = [quarterlyLabelFormulas];
     timelineFormulaRangeType.format.horizontalAlignment = "Right";
     timelineFormulaRangeQuarter.format.horizontalAlignment = "Right";
     timelineFormulaRangeStart.numberFormat = [
