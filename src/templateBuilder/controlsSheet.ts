@@ -264,7 +264,7 @@ export async function createControlsSheet(spec: ControlsSheetSpec): Promise<void
       30,
       timelineStartColIndex,
       1,
-      spec.timelineColumns
+      quarterlyColumns
     );
 
     const startDateFormulas: string[] = [];
@@ -322,7 +322,9 @@ export async function createControlsSheet(spec: ControlsSheetSpec): Promise<void
     timelineFormulaRangeQuarterlyCounter.formulas = [
       quarterlyCounterFormulas.slice(0, quarterlyColumns),
     ];
-    timelineFormulaRangeQuarterlyLabel.formulas = [quarterlyLabelFormulas];
+    timelineFormulaRangeQuarterlyLabel.formulas = [
+      quarterlyLabelFormulas.slice(0, quarterlyColumns),
+    ];
     timelineFormulaRangeType.format.horizontalAlignment = "Right";
     timelineFormulaRangeQuarter.format.horizontalAlignment = "Right";
     timelineFormulaRangeStart.numberFormat = [
