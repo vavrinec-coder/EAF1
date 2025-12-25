@@ -177,6 +177,8 @@ export async function createControlsSheet(spec: ControlsSheetSpec): Promise<void
 
     sheet.getRange("B19").values = [["Monthly timeline"]];
     sheet.getRange("B19").format.font.bold = true;
+    sheet.getRange("B27").values = [["Quarterly timeline"]];
+    sheet.getRange("B27").format.font.bold = true;
 
     sheet.getRange("B20:B25").values = [
       ["Start Date"],
@@ -186,6 +188,7 @@ export async function createControlsSheet(spec: ControlsSheetSpec): Promise<void
       ["Financial Year"],
       ["Financial Quarter"],
     ];
+    sheet.getRange("B28:B30").values = [["Start Date"], ["End Date"], ["Period counter"]];
     sheet.getRange("I20:I25").values = [
       ["Date"],
       ["Date"],
@@ -194,6 +197,7 @@ export async function createControlsSheet(spec: ControlsSheetSpec): Promise<void
       ["Year"],
       ["Label"],
     ];
+    sheet.getRange("I28:I30").values = [["Date"], ["Date"], ["Counter"]];
 
     const timelineStartColIndex = spec.constantsColumns;
     const timelineFormulaRangeStart = sheet.getRangeByIndexes(
@@ -232,6 +236,24 @@ export async function createControlsSheet(spec: ControlsSheetSpec): Promise<void
       1,
       spec.timelineColumns
     );
+    const timelineFormulaRangeQuarterlyStart = sheet.getRangeByIndexes(
+      27,
+      timelineStartColIndex,
+      1,
+      spec.timelineColumns
+    );
+    const timelineFormulaRangeQuarterlyEnd = sheet.getRangeByIndexes(
+      28,
+      timelineStartColIndex,
+      1,
+      spec.timelineColumns
+    );
+    const timelineFormulaRangeQuarterlyCounter = sheet.getRangeByIndexes(
+      29,
+      timelineStartColIndex,
+      1,
+      spec.timelineColumns
+    );
 
     const startDateFormulas: string[] = [];
     const endDateFormulas: string[] = [];
@@ -239,6 +261,9 @@ export async function createControlsSheet(spec: ControlsSheetSpec): Promise<void
     const periodCounterFormulas: string[] = [];
     const financialYearFormulas: string[] = [];
     const financialQuarterFormulas: string[] = [];
+    const quarterlyStartFormulas: string[] = [];
+    const quarterlyEndFormulas: string[] = [];
+    const quarterlyCounterFormulas: string[] = [];
     for (let i = 0; i < spec.timelineColumns; i += 1) {
       const columnIndex = timelineStartColIndex + i;
       const columnLetter = columnIndexToLetters(columnIndex);
@@ -255,6 +280,13 @@ export async function createControlsSheet(spec: ControlsSheetSpec): Promise<void
       financialQuarterFormulas.push(
         `=CHOOSE(INT(MOD(MONTH(${columnLetter}21)-$C$14-1,12)/3)+1,"Q1","Q2","Q3","Q4")`
       );
+      quarterlyStartFormulas.push(
+        `=IF(ISBLANK(${prevColumnLetter}28),$C$9,${prevColumnLetter}29+1)`
+      );
+      quarterlyEndFormulas.push(`=EOMONTH(${columnLetter}28,2)`);
+      quarterlyCounterFormulas.push(
+        `=IF(ISBLANK(${prevColumnLetter}30),1,${prevColumnLetter}30+1)`
+      );
     }
 
     timelineFormulaRangeStart.formulas = [startDateFormulas];
@@ -263,12 +295,21 @@ export async function createControlsSheet(spec: ControlsSheetSpec): Promise<void
     timelineFormulaRangeCounter.formulas = [periodCounterFormulas];
     timelineFormulaRangeYear.formulas = [financialYearFormulas];
     timelineFormulaRangeQuarter.formulas = [financialQuarterFormulas];
+    timelineFormulaRangeQuarterlyStart.formulas = [quarterlyStartFormulas];
+    timelineFormulaRangeQuarterlyEnd.formulas = [quarterlyEndFormulas];
+    timelineFormulaRangeQuarterlyCounter.formulas = [quarterlyCounterFormulas];
     timelineFormulaRangeType.format.horizontalAlignment = "Right";
     timelineFormulaRangeQuarter.format.horizontalAlignment = "Right";
     timelineFormulaRangeStart.numberFormat = [
       Array.from({ length: spec.timelineColumns }, () => DATE_NUMBER_FORMAT),
     ];
     timelineFormulaRangeEnd.numberFormat = [
+      Array.from({ length: spec.timelineColumns }, () => DATE_NUMBER_FORMAT),
+    ];
+    timelineFormulaRangeQuarterlyStart.numberFormat = [
+      Array.from({ length: spec.timelineColumns }, () => DATE_NUMBER_FORMAT),
+    ];
+    timelineFormulaRangeQuarterlyEnd.numberFormat = [
       Array.from({ length: spec.timelineColumns }, () => DATE_NUMBER_FORMAT),
     ];
     sheet.getRangeByIndexes(21, timelineStartColIndex, 1, spec.timelineColumns).format.horizontalAlignment =
