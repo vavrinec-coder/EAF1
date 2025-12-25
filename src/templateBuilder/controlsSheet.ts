@@ -36,6 +36,8 @@ export type ControlsSheetSpec = {
     actualsEndDate: Date;
     timelineLength: number;
     financialYearEndMonth: number;
+    historicalPeriod: string;
+    forecastPeriod: string;
   };
 };
 
@@ -102,7 +104,7 @@ export async function createControlsSheet(spec: ControlsSheetSpec): Promise<void
     timeRange.values = timeValues;
 
     const constantsStartRow = spec.constantsBlock.startRow;
-    const labelRange = sheet.getRangeByIndexes(constantsStartRow - 1, 1, 7, 1);
+    const labelRange = sheet.getRangeByIndexes(constantsStartRow - 1, 1, 9, 1);
     labelRange.values = [
       ["Timeline Start Date"],
       ["Actuals End Date"],
@@ -111,10 +113,12 @@ export async function createControlsSheet(spec: ControlsSheetSpec): Promise<void
       ["Forecast End Date"],
       ["Financial Year End (month)"],
       ["Last Actual Period Column number"],
+      ["Historical period"],
+      ["Forecast period"],
     ];
     labelRange.format.horizontalAlignment = Excel.HorizontalAlignment.left;
 
-    const unitRange = sheet.getRangeByIndexes(constantsStartRow - 1, 8, 7, 1);
+    const unitRange = sheet.getRangeByIndexes(constantsStartRow - 1, 8, 9, 1);
     unitRange.values = [
       ["Date"],
       ["Date"],
@@ -123,10 +127,12 @@ export async function createControlsSheet(spec: ControlsSheetSpec): Promise<void
       ["Date"],
       ["month"],
       ["#"],
+      ["Label"],
+      ["Label"],
     ];
     unitRange.format.horizontalAlignment = Excel.HorizontalAlignment.left;
 
-    const valueRange = sheet.getRangeByIndexes(constantsStartRow - 1, 2, 7, 1);
+    const valueRange = sheet.getRangeByIndexes(constantsStartRow - 1, 2, 9, 1);
     valueRange.values = [
       [toExcelDateSerial(spec.constantsBlock.timelineStartDate)],
       [toExcelDateSerial(spec.constantsBlock.actualsEndDate)],
@@ -135,6 +141,8 @@ export async function createControlsSheet(spec: ControlsSheetSpec): Promise<void
       [null],
       [spec.constantsBlock.financialYearEndMonth],
       [null],
+      [spec.constantsBlock.historicalPeriod],
+      [spec.constantsBlock.forecastPeriod],
     ];
     valueRange.format.horizontalAlignment = Excel.HorizontalAlignment.right;
 
@@ -145,6 +153,8 @@ export async function createControlsSheet(spec: ControlsSheetSpec): Promise<void
     const row5 = constantsStartRow + 4;
     const row6 = constantsStartRow + 5;
     const row7 = constantsStartRow + 6;
+    const row8 = constantsStartRow + 7;
+    const row9 = constantsStartRow + 8;
     sheet.getRange(`C${row3}`).formulas = [[`=C${row2}+1`]];
     sheet.getRange(`C${row5}`).formulas = [[`=EOMONTH(C${row1},C${row4}-1)`]];
     sheet.getRange(`C${row7}`).formulas = [[`=ROUND((C${row2}-C${row1})/30,0)`]];
@@ -153,6 +163,8 @@ export async function createControlsSheet(spec: ControlsSheetSpec): Promise<void
     sheet.getRange(`C${row2}`).format.font.color = "#3333FF";
     sheet.getRange(`C${row4}`).format.font.color = "#3333FF";
     sheet.getRange(`C${row6}`).format.font.color = "#3333FF";
+    sheet.getRange(`C${row8}`).format.font.color = "#3333FF";
+    sheet.getRange(`C${row9}`).format.font.color = "#3333FF";
     sheet.getRange(`C${row3}`).format.font.color = "#000000";
     sheet.getRange(`C${row5}`).format.font.color = "#000000";
 

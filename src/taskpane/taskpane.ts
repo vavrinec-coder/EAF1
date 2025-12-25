@@ -37,6 +37,8 @@ let constantsTimelineLengthInputEl: HTMLInputElement;
 let constantsStartDateInputEl: HTMLInputElement;
 let constantsActualsEndInputEl: HTMLInputElement;
 let constantsYearEndMonthInputEl: HTMLSelectElement;
+let constantsHistoricalPeriodInputEl: HTMLInputElement;
+let constantsForecastPeriodInputEl: HTMLInputElement;
 
 let timeHeaderColumnsDirty = false;
 let timelineLengthDirty = false;
@@ -95,6 +97,12 @@ Office.onReady((info) => {
   constantsYearEndMonthInputEl = document.getElementById(
     "constants-year-end-month"
   ) as HTMLSelectElement;
+  constantsHistoricalPeriodInputEl = document.getElementById(
+    "constants-historical-period"
+  ) as HTMLInputElement;
+  constantsForecastPeriodInputEl = document.getElementById(
+    "constants-forecast-period"
+  ) as HTMLInputElement;
 
   loadButton.addEventListener("click", () => {
     void handleLoadSelection();
@@ -359,7 +367,7 @@ function getControlsSheetSpecFromForm(): ControlsSheetFormResult {
   if (constantsStartRow === null) {
     return { ok: false, error: "Constants start row must be a whole number of 1 or greater." };
   }
-  if (constantsStartRow + 6 > MAX_EXCEL_ROWS) {
+  if (constantsStartRow + 8 > MAX_EXCEL_ROWS) {
     return { ok: false, error: "Constants block exceeds worksheet row limits." };
   }
 
@@ -382,6 +390,9 @@ function getControlsSheetSpecFromForm(): ControlsSheetFormResult {
   if (!actualsEndDate) {
     return { ok: false, error: "Actuals End Date must be a valid date." };
   }
+
+  const historicalPeriod = constantsHistoricalPeriodInputEl.value.trim();
+  const forecastPeriod = constantsForecastPeriodInputEl.value.trim();
 
   const widthA = parseNonNegativeNumber(widthColAInputEl.value);
   const widthB = parseNonNegativeNumber(widthColBInputEl.value);
@@ -447,6 +458,8 @@ function getControlsSheetSpecFromForm(): ControlsSheetFormResult {
         actualsEndDate,
         timelineLength: constantsTimelineLength,
         financialYearEndMonth,
+        historicalPeriod,
+        forecastPeriod,
       },
     },
   };
