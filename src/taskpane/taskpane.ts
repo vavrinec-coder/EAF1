@@ -4,11 +4,13 @@ import { createControlsSheet, ControlsSheetSpec } from "../templateBuilder/contr
 
 const MAX_EXCEL_ROWS = 1048576;
 const MAX_EXCEL_COLUMNS = 16384;
+const DEFAULT_CONSTANTS_COLUMNS = 10;
+const DEFAULT_TIME_HEADER_START_CELL = "A7";
+const DEFAULT_CONSTANTS_START_ROW = 9;
 
 let selectedRangeEl: HTMLSpanElement;
 let headerListEl: HTMLDivElement;
 let statusEl: HTMLDivElement;
-let constantsColumnsInputEl: HTMLInputElement;
 let timelineColumnsInputEl: HTMLInputElement;
 let modelFontNameInputEl: HTMLInputElement;
 let modelFontColorInputEl: HTMLInputElement;
@@ -26,13 +28,11 @@ let widthColHInputEl: HTMLInputElement;
 let widthColIInputEl: HTMLInputElement;
 let widthColJInputEl: HTMLInputElement;
 let createControlsButtonEl: HTMLButtonElement;
-let timeHeaderStartCellInputEl: HTMLInputElement;
 let timeHeaderTitleInputEl: HTMLInputElement;
 let timeHeaderRowsInputEl: HTMLInputElement;
 let timeHeaderColumnsInputEl: HTMLInputElement;
 let timeHeaderFillInputEl: HTMLInputElement;
 let timeHeaderFontColorInputEl: HTMLInputElement;
-let constantsStartRowInputEl: HTMLInputElement;
 let constantsTimelineLengthInputEl: HTMLInputElement;
 let constantsStartDateInputEl: HTMLInputElement;
 let constantsActualsEndInputEl: HTMLInputElement;
@@ -64,7 +64,6 @@ Office.onReady((info) => {
   const loadButton = document.getElementById("load-selection") as HTMLButtonElement;
   const unpivotButton = document.getElementById("unpivot") as HTMLButtonElement;
 
-  constantsColumnsInputEl = document.getElementById("model-constants-columns") as HTMLInputElement;
   timelineColumnsInputEl = document.getElementById("model-timeline-columns") as HTMLInputElement;
   modelFontNameInputEl = document.getElementById("model-font-name") as HTMLInputElement;
   modelFontColorInputEl = document.getElementById("model-font-color") as HTMLInputElement;
@@ -82,13 +81,11 @@ Office.onReady((info) => {
   widthColIInputEl = document.getElementById("width-col-i") as HTMLInputElement;
   widthColJInputEl = document.getElementById("width-col-j") as HTMLInputElement;
   createControlsButtonEl = document.getElementById("create-controls-sheet") as HTMLButtonElement;
-  timeHeaderStartCellInputEl = document.getElementById("time-header-start-cell") as HTMLInputElement;
   timeHeaderTitleInputEl = document.getElementById("time-header-title") as HTMLInputElement;
   timeHeaderRowsInputEl = document.getElementById("time-header-rows") as HTMLInputElement;
   timeHeaderColumnsInputEl = document.getElementById("time-header-columns") as HTMLInputElement;
   timeHeaderFillInputEl = document.getElementById("time-header-fill") as HTMLInputElement;
   timeHeaderFontColorInputEl = document.getElementById("time-header-font-color") as HTMLInputElement;
-  constantsStartRowInputEl = document.getElementById("constants-start-row") as HTMLInputElement;
   constantsTimelineLengthInputEl = document.getElementById(
     "constants-timeline-length"
   ) as HTMLInputElement;
@@ -118,9 +115,6 @@ Office.onReady((info) => {
   });
   constantsTimelineLengthInputEl.addEventListener("input", () => {
     timelineLengthDirty = constantsTimelineLengthInputEl.value.trim().length > 0;
-  });
-  constantsColumnsInputEl.addEventListener("input", () => {
-    syncDerivedDefaults();
   });
   timelineColumnsInputEl.addEventListener("input", () => {
     syncDerivedDefaults();
@@ -282,10 +276,7 @@ type ControlsSheetFormResult =
   | { ok: false; error: string };
 
 function getControlsSheetSpecFromForm(): ControlsSheetFormResult {
-  const constantsColumns = parsePositiveInt(constantsColumnsInputEl.value);
-  if (constantsColumns === null) {
-    return { ok: false, error: "Columns for constants must be a whole number of 1 or greater." };
-  }
+  const constantsColumns = DEFAULT_CONSTANTS_COLUMNS;
 
   const timelineColumns = parsePositiveInt(timelineColumnsInputEl.value);
   if (timelineColumns === null) {
@@ -322,14 +313,11 @@ function getControlsSheetSpecFromForm(): ControlsSheetFormResult {
     return { ok: false, error: "Sheet header background must be a valid hex value." };
   }
 
-  const timeHeaderStartCell = timeHeaderStartCellInputEl.value.trim().toUpperCase();
-  if (!timeHeaderStartCell) {
-    return { ok: false, error: "TIME header start cell is required." };
-  }
+  const timeHeaderStartCell = DEFAULT_TIME_HEADER_START_CELL;
 
   const parsedStartCell = parseA1CellAddress(timeHeaderStartCell);
   if (!parsedStartCell) {
-    return { ok: false, error: "TIME header start cell must be a single A1 address like A6." };
+    return { ok: false, error: "TIME header start cell must be a single A1 address like A7." };
   }
 
   const timeHeaderTitle = timeHeaderTitleInputEl.value.trim();
@@ -363,10 +351,7 @@ function getControlsSheetSpecFromForm(): ControlsSheetFormResult {
     return { ok: false, error: "TIME header font color must be a valid hex value." };
   }
 
-  const constantsStartRow = parsePositiveInt(constantsStartRowInputEl.value);
-  if (constantsStartRow === null) {
-    return { ok: false, error: "Constants start row must be a whole number of 1 or greater." };
-  }
+  const constantsStartRow = DEFAULT_CONSTANTS_START_ROW;
   if (constantsStartRow + 8 > MAX_EXCEL_ROWS) {
     return { ok: false, error: "Constants block exceeds worksheet row limits." };
   }
@@ -550,13 +535,12 @@ function parseDateInput(value: string): Date | null {
 }
 
 function syncDerivedDefaults(force = false): void {
-  const constantsColumns = parsePositiveInt(constantsColumnsInputEl.value);
   const timelineColumns = parsePositiveInt(timelineColumnsInputEl.value);
-  if (constantsColumns === null || timelineColumns === null) {
+  if (timelineColumns === null) {
     return;
   }
 
-  const totalColumns = constantsColumns + timelineColumns;
+  const totalColumns = DEFAULT_CONSTANTS_COLUMNS + timelineColumns;
   if (force || !timeHeaderColumnsDirty) {
     timeHeaderColumnsInputEl.value = totalColumns.toString();
     timeHeaderColumnsDirty = false;
