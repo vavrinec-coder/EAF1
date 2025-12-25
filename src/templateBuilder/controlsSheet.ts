@@ -143,6 +143,7 @@ export async function createControlsSheet(spec: ControlsSheetSpec): Promise<void
     const row3 = constantsStartRow + 2;
     const row4 = constantsStartRow + 3;
     const row5 = constantsStartRow + 4;
+    const row6 = constantsStartRow + 5;
     const row7 = constantsStartRow + 6;
     sheet.getRange(`C${row3}`).formulas = [[`=C${row2}+1`]];
     sheet.getRange(`C${row5}`).formulas = [[`=EOMONTH(C${row1},C${row4}-1)`]];
