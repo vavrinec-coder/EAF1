@@ -178,10 +178,22 @@ export async function createControlsSheet(spec: ControlsSheetSpec): Promise<void
     sheet.getRange("B19").values = [["Monthly timeline"]];
     sheet.getRange("B19").format.font.bold = true;
 
-    sheet.getRange("B20").values = [["Start Date"]];
-    sheet.getRange("B21").values = [["End Date"]];
-    sheet.getRange("I20").values = [["Date"]];
-    sheet.getRange("I21").values = [["Date"]];
+    sheet.getRange("B20:B25").values = [
+      ["Start Date"],
+      ["End Date"],
+      ["Period type"],
+      ["Period counter"],
+      ["Financial Year"],
+      ["Financial Quarter"],
+    ];
+    sheet.getRange("I20:I25").values = [
+      ["Date"],
+      ["Date"],
+      ["Label"],
+      ["Counter"],
+      ["Year"],
+      ["Label"],
+    ];
 
     const timelineStartColIndex = spec.constantsColumns;
     const timelineFormulaRangeStart = sheet.getRangeByIndexes(
@@ -196,9 +208,37 @@ export async function createControlsSheet(spec: ControlsSheetSpec): Promise<void
       1,
       spec.timelineColumns
     );
+    const timelineFormulaRangeType = sheet.getRangeByIndexes(
+      21,
+      timelineStartColIndex,
+      1,
+      spec.timelineColumns
+    );
+    const timelineFormulaRangeCounter = sheet.getRangeByIndexes(
+      22,
+      timelineStartColIndex,
+      1,
+      spec.timelineColumns
+    );
+    const timelineFormulaRangeYear = sheet.getRangeByIndexes(
+      23,
+      timelineStartColIndex,
+      1,
+      spec.timelineColumns
+    );
+    const timelineFormulaRangeQuarter = sheet.getRangeByIndexes(
+      24,
+      timelineStartColIndex,
+      1,
+      spec.timelineColumns
+    );
 
     const startDateFormulas: string[] = [];
     const endDateFormulas: string[] = [];
+    const periodTypeFormulas: string[] = [];
+    const periodCounterFormulas: string[] = [];
+    const financialYearFormulas: string[] = [];
+    const financialQuarterFormulas: string[] = [];
     for (let i = 0; i < spec.timelineColumns; i += 1) {
       const columnIndex = timelineStartColIndex + i;
       const columnLetter = columnIndexToLetters(columnIndex);
@@ -207,10 +247,22 @@ export async function createControlsSheet(spec: ControlsSheetSpec): Promise<void
         `=IF(ISBLANK(${prevColumnLetter}20),$C$9,${prevColumnLetter}21+1)`
       );
       endDateFormulas.push(`=EOMONTH(${columnLetter}20,0)`);
+      periodTypeFormulas.push(`=IF(${columnLetter}21>$C$10,$C$17,$C$16)`);
+      periodCounterFormulas.push(`=IF(ISBLANK(${prevColumnLetter}23),1,${prevColumnLetter}23+1)`);
+      financialYearFormulas.push(
+        `=IF(MONTH(${columnLetter}21)>$C$14,YEAR(${columnLetter}21)+1,YEAR(${columnLetter}21))`
+      );
+      financialQuarterFormulas.push(
+        `=CHOOSE(INT(MOD(MONTH(${columnLetter}21)-$C$14-1,12)/3)+1,"Q1","Q2","Q3","Q4")`
+      );
     }
 
     timelineFormulaRangeStart.formulas = [startDateFormulas];
     timelineFormulaRangeEnd.formulas = [endDateFormulas];
+    timelineFormulaRangeType.formulas = [periodTypeFormulas];
+    timelineFormulaRangeCounter.formulas = [periodCounterFormulas];
+    timelineFormulaRangeYear.formulas = [financialYearFormulas];
+    timelineFormulaRangeQuarter.formulas = [financialQuarterFormulas];
     timelineFormulaRangeStart.numberFormat = [
       Array.from({ length: spec.timelineColumns }, () => DATE_NUMBER_FORMAT),
     ];
