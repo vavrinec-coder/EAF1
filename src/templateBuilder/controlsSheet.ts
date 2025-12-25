@@ -263,14 +263,18 @@ export async function createControlsSheet(spec: ControlsSheetSpec): Promise<void
     timelineFormulaRangeCounter.formulas = [periodCounterFormulas];
     timelineFormulaRangeYear.formulas = [financialYearFormulas];
     timelineFormulaRangeQuarter.formulas = [financialQuarterFormulas];
-    timelineFormulaRangeType.format.horizontalAlignment = Excel.HorizontalAlignment.right;
-    timelineFormulaRangeQuarter.format.horizontalAlignment = Excel.HorizontalAlignment.right;
+    timelineFormulaRangeType.format.horizontalAlignment = "Right";
+    timelineFormulaRangeQuarter.format.horizontalAlignment = "Right";
     timelineFormulaRangeStart.numberFormat = [
       Array.from({ length: spec.timelineColumns }, () => DATE_NUMBER_FORMAT),
     ];
     timelineFormulaRangeEnd.numberFormat = [
       Array.from({ length: spec.timelineColumns }, () => DATE_NUMBER_FORMAT),
     ];
+    sheet.getRangeByIndexes(21, timelineStartColIndex, 1, spec.timelineColumns).format.horizontalAlignment =
+      "Right";
+    sheet.getRangeByIndexes(24, timelineStartColIndex, 1, spec.timelineColumns).format.horizontalAlignment =
+      "Right";
 
     sheet.activate();
     await context.sync();
