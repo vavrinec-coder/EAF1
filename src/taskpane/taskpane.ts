@@ -6,6 +6,7 @@ const MAX_EXCEL_ROWS = 1048576;
 const MAX_EXCEL_COLUMNS = 16384;
 const DEFAULT_CONSTANTS_COLUMNS = 10;
 const DEFAULT_TIME_HEADER_START_CELL = "A7";
+const DEFAULT_TIME_HEADER_ROWS = 1;
 const DEFAULT_CONSTANTS_START_ROW = 9;
 
 let selectedRangeEl: HTMLSpanElement;
@@ -29,8 +30,6 @@ let widthColIInputEl: HTMLInputElement;
 let widthColJInputEl: HTMLInputElement;
 let createControlsButtonEl: HTMLButtonElement;
 let timeHeaderTitleInputEl: HTMLInputElement;
-let timeHeaderRowsInputEl: HTMLInputElement;
-let timeHeaderColumnsInputEl: HTMLInputElement;
 let timeHeaderFillInputEl: HTMLInputElement;
 let timeHeaderFontColorInputEl: HTMLInputElement;
 let constantsTimelineLengthInputEl: HTMLInputElement;
@@ -40,7 +39,6 @@ let constantsYearEndMonthInputEl: HTMLSelectElement;
 let constantsHistoricalPeriodInputEl: HTMLInputElement;
 let constantsForecastPeriodInputEl: HTMLInputElement;
 
-let timeHeaderColumnsDirty = false;
 let timelineLengthDirty = false;
 
 Office.onReady((info) => {
@@ -82,8 +80,6 @@ Office.onReady((info) => {
   widthColJInputEl = document.getElementById("width-col-j") as HTMLInputElement;
   createControlsButtonEl = document.getElementById("create-controls-sheet") as HTMLButtonElement;
   timeHeaderTitleInputEl = document.getElementById("time-header-title") as HTMLInputElement;
-  timeHeaderRowsInputEl = document.getElementById("time-header-rows") as HTMLInputElement;
-  timeHeaderColumnsInputEl = document.getElementById("time-header-columns") as HTMLInputElement;
   timeHeaderFillInputEl = document.getElementById("time-header-fill") as HTMLInputElement;
   timeHeaderFontColorInputEl = document.getElementById("time-header-font-color") as HTMLInputElement;
   constantsTimelineLengthInputEl = document.getElementById(
@@ -109,9 +105,6 @@ Office.onReady((info) => {
   });
   createControlsButtonEl.addEventListener("click", () => {
     void handleCreateControlsSheet();
-  });
-  timeHeaderColumnsInputEl.addEventListener("input", () => {
-    timeHeaderColumnsDirty = timeHeaderColumnsInputEl.value.trim().length > 0;
   });
   constantsTimelineLengthInputEl.addEventListener("input", () => {
     timelineLengthDirty = constantsTimelineLengthInputEl.value.trim().length > 0;
@@ -325,15 +318,9 @@ function getControlsSheetSpecFromForm(): ControlsSheetFormResult {
     return { ok: false, error: "TIME header title is required." };
   }
 
-  const timeHeaderRows = parsePositiveInt(timeHeaderRowsInputEl.value);
-  if (timeHeaderRows === null) {
-    return { ok: false, error: "TIME header rows must be a whole number of 1 or greater." };
-  }
+  const timeHeaderRows = DEFAULT_TIME_HEADER_ROWS;
 
-  const timeHeaderColumns = parsePositiveInt(timeHeaderColumnsInputEl.value);
-  if (timeHeaderColumns === null) {
-    return { ok: false, error: "TIME header columns must be a whole number of 1 or greater." };
-  }
+  const timeHeaderColumns = totalColumns;
 
   const timeHeaderEndRow = parsedStartCell.row + timeHeaderRows - 1;
   const timeHeaderEndColumn = parsedStartCell.column + timeHeaderColumns - 1;
@@ -541,11 +528,6 @@ function syncDerivedDefaults(force = false): void {
   }
 
   const totalColumns = DEFAULT_CONSTANTS_COLUMNS + timelineColumns;
-  if (force || !timeHeaderColumnsDirty) {
-    timeHeaderColumnsInputEl.value = totalColumns.toString();
-    timeHeaderColumnsDirty = false;
-  }
-
   if (force || !timelineLengthDirty) {
     constantsTimelineLengthInputEl.value = timelineColumns.toString();
     timelineLengthDirty = false;
