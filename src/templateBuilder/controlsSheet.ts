@@ -194,6 +194,9 @@ export async function createControlsSheet(spec: ControlsSheetSpec): Promise<void
       ["Period counter"],
       ["Financial Quarter"],
     ];
+    sheet.getRange("B33").values = [["Annual timeline"]];
+    sheet.getRange("B33").format.font.bold = true;
+    sheet.getRange("B34:B35").values = [["Start Date"], ["End Date"]];
     sheet.getRange("I20:I25").values = [
       ["Date"],
       ["Date"],
@@ -203,6 +206,7 @@ export async function createControlsSheet(spec: ControlsSheetSpec): Promise<void
       ["Label"],
     ];
     sheet.getRange("I28:I31").values = [["Date"], ["Date"], ["Counter"], ["Label"]];
+    sheet.getRange("I34:I35").values = [["Date"], ["Date"]];
 
     const timelineStartColIndex = spec.constantsColumns;
     const timelineFormulaRangeStart = sheet.getRangeByIndexes(
@@ -266,6 +270,19 @@ export async function createControlsSheet(spec: ControlsSheetSpec): Promise<void
       1,
       quarterlyColumns
     );
+    const annualColumns = Math.max(1, Math.floor(spec.timelineColumns / 12));
+    const timelineFormulaRangeAnnualStart = sheet.getRangeByIndexes(
+      33,
+      timelineStartColIndex,
+      1,
+      annualColumns
+    );
+    const timelineFormulaRangeAnnualEnd = sheet.getRangeByIndexes(
+      34,
+      timelineStartColIndex,
+      1,
+      annualColumns
+    );
 
     const startDateFormulas: string[] = [];
     const endDateFormulas: string[] = [];
@@ -277,6 +294,8 @@ export async function createControlsSheet(spec: ControlsSheetSpec): Promise<void
     const quarterlyEndFormulas: string[] = [];
     const quarterlyCounterFormulas: string[] = [];
     const quarterlyLabelFormulas: string[] = [];
+    const annualStartFormulas: string[] = [];
+    const annualEndFormulas: string[] = [];
     const timelineStartColumnLetter = columnIndexToLetters(timelineStartColIndex);
     const timelineEndColumnLetter = columnIndexToLetters(
       timelineStartColIndex + spec.timelineColumns - 1
@@ -309,6 +328,10 @@ export async function createControlsSheet(spec: ControlsSheetSpec): Promise<void
       quarterlyLabelFormulas.push(
         `=INDEX(${timelineQuarterRange},MATCH(${columnLetter}29,${timelineMatchRange},0))`
       );
+      annualStartFormulas.push(
+        `=IF(ISBLANK(${prevColumnLetter}34),$C$9,${prevColumnLetter}35+1)`
+      );
+      annualEndFormulas.push(`=EOMONTH(${columnLetter}34,11)`);
     }
 
     timelineFormulaRangeStart.formulas = [startDateFormulas];
@@ -325,6 +348,8 @@ export async function createControlsSheet(spec: ControlsSheetSpec): Promise<void
     timelineFormulaRangeQuarterlyLabel.formulas = [
       quarterlyLabelFormulas.slice(0, quarterlyColumns),
     ];
+    timelineFormulaRangeAnnualStart.formulas = [annualStartFormulas.slice(0, annualColumns)];
+    timelineFormulaRangeAnnualEnd.formulas = [annualEndFormulas.slice(0, annualColumns)];
     timelineFormulaRangeType.format.horizontalAlignment = "Right";
     timelineFormulaRangeQuarter.format.horizontalAlignment = "Right";
     timelineFormulaRangeStart.numberFormat = [
@@ -339,9 +364,21 @@ export async function createControlsSheet(spec: ControlsSheetSpec): Promise<void
     timelineFormulaRangeQuarterlyEnd.numberFormat = [
       Array.from({ length: quarterlyColumns }, () => DATE_NUMBER_FORMAT),
     ];
+    timelineFormulaRangeAnnualStart.numberFormat = [
+      Array.from({ length: annualColumns }, () => DATE_NUMBER_FORMAT),
+    ];
+    timelineFormulaRangeAnnualEnd.numberFormat = [
+      Array.from({ length: annualColumns }, () => DATE_NUMBER_FORMAT),
+    ];
     sheet.getRangeByIndexes(21, timelineStartColIndex, 1, spec.timelineColumns).format.horizontalAlignment =
       "Right";
     sheet.getRangeByIndexes(24, timelineStartColIndex, 1, spec.timelineColumns).format.horizontalAlignment =
+      "Right";
+    sheet.getRangeByIndexes(20, timelineStartColIndex, 6, spec.timelineColumns).format.horizontalAlignment =
+      "Right";
+    sheet.getRangeByIndexes(27, timelineStartColIndex, 4, quarterlyColumns).format.horizontalAlignment =
+      "Right";
+    sheet.getRangeByIndexes(33, timelineStartColIndex, 2, annualColumns).format.horizontalAlignment =
       "Right";
 
     sheet.activate();
