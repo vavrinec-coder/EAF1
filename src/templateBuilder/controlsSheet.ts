@@ -254,13 +254,13 @@ export async function createControlsSheet(spec: ControlsSheetSpec): Promise<void
     sheet.getRange("I44:I53").values = [
       ["#"],
       ["#"],
-      ["1/0"],
-      ["1/0"],
-      ["1/0"],
+      ["'1/0"],
+      ["'1/0"],
+      ["'1/0"],
       ["#"],
-      ["1/0"],
+      ["'1/0"],
       ["#"],
-      ["1/0"],
+      ["'1/0"],
       ["#"],
     ];
     sheet.getRange("I44:I53").numberFormat = Array.from({ length: 10 }, () => ["@"]);
