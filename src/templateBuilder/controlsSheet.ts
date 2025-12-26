@@ -30,6 +30,14 @@ export type ControlsSheetSpec = {
     fillColor: string;
     fontColor: string;
   };
+  flagsHeader: {
+    startCell: string;
+    title: string;
+    rows: number;
+    columns: number;
+    fillColor: string;
+    fontColor: string;
+  };
   constantsBlock: {
     startRow: number;
     timelineStartDate: Date;
@@ -104,6 +112,21 @@ export async function createControlsSheet(spec: ControlsSheetSpec): Promise<void
       )
     );
     timeRange.values = timeValues;
+
+    const flagsAnchor = sheet.getRange(spec.flagsHeader.startCell);
+    const flagsRange = flagsAnchor.getResizedRange(
+      spec.flagsHeader.rows - 1,
+      spec.flagsHeader.columns - 1
+    );
+    flagsRange.format.fill.color = spec.flagsHeader.fillColor;
+    flagsRange.format.font.name = spec.font.name;
+    flagsRange.format.font.color = spec.flagsHeader.fontColor;
+    const flagsValues: string[][] = Array.from({ length: spec.flagsHeader.rows }, (_, rowIndex) =>
+      Array.from({ length: spec.flagsHeader.columns }, (_, columnIndex) =>
+        rowIndex === 0 && columnIndex === 0 ? spec.flagsHeader.title : ""
+      )
+    );
+    flagsRange.values = flagsValues;
 
     const constantsStartRow = spec.constantsBlock.startRow;
     const labelRange = sheet.getRangeByIndexes(constantsStartRow - 1, 1, 9, 1);

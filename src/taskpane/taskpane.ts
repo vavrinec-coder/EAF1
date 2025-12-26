@@ -8,6 +8,8 @@ const DEFAULT_CONSTANTS_COLUMNS = 10;
 const DEFAULT_TIME_HEADER_START_CELL = "A7";
 const DEFAULT_TIME_HEADER_ROWS = 1;
 const DEFAULT_CONSTANTS_START_ROW = 9;
+const DEFAULT_FLAGS_HEADER_START_CELL = "A41";
+const DEFAULT_FLAGS_HEADER_ROWS = 1;
 
 let selectedRangeEl: HTMLSpanElement;
 let headerListEl: HTMLDivElement;
@@ -38,6 +40,9 @@ let constantsActualsEndInputEl: HTMLInputElement;
 let constantsYearEndMonthInputEl: HTMLSelectElement;
 let constantsHistoricalPeriodInputEl: HTMLInputElement;
 let constantsForecastPeriodInputEl: HTMLInputElement;
+let flagsHeaderTitleInputEl: HTMLInputElement;
+let flagsHeaderFillInputEl: HTMLInputElement;
+let flagsHeaderFontColorInputEl: HTMLInputElement;
 
 let timelineLengthDirty = false;
 
@@ -95,6 +100,11 @@ Office.onReady((info) => {
   ) as HTMLInputElement;
   constantsForecastPeriodInputEl = document.getElementById(
     "constants-forecast-period"
+  ) as HTMLInputElement;
+  flagsHeaderTitleInputEl = document.getElementById("flags-header-title") as HTMLInputElement;
+  flagsHeaderFillInputEl = document.getElementById("flags-header-fill") as HTMLInputElement;
+  flagsHeaderFontColorInputEl = document.getElementById(
+    "flags-header-font-color"
   ) as HTMLInputElement;
 
   loadButton.addEventListener("click", () => {
@@ -338,6 +348,21 @@ function getControlsSheetSpecFromForm(): ControlsSheetFormResult {
     return { ok: false, error: "TIME header font color must be a valid hex value." };
   }
 
+  const flagsHeaderTitle = flagsHeaderTitleInputEl.value.trim();
+  if (!flagsHeaderTitle) {
+    return { ok: false, error: "FLAGS header title is required." };
+  }
+
+  const flagsHeaderFill = flagsHeaderFillInputEl.value.trim();
+  if (!isValidHexColor(flagsHeaderFill)) {
+    return { ok: false, error: "FLAGS header background must be a valid hex value." };
+  }
+
+  const flagsHeaderFontColor = flagsHeaderFontColorInputEl.value.trim();
+  if (!isValidHexColor(flagsHeaderFontColor)) {
+    return { ok: false, error: "FLAGS header font color must be a valid hex value." };
+  }
+
   const constantsStartRow = DEFAULT_CONSTANTS_START_ROW;
   if (constantsStartRow + 8 > MAX_EXCEL_ROWS) {
     return { ok: false, error: "Constants block exceeds worksheet row limits." };
@@ -423,6 +448,14 @@ function getControlsSheetSpecFromForm(): ControlsSheetFormResult {
         columns: timeHeaderColumns,
         fillColor: timeHeaderFill,
         fontColor: timeHeaderFontColor,
+      },
+      flagsHeader: {
+        startCell: DEFAULT_FLAGS_HEADER_START_CELL,
+        title: flagsHeaderTitle,
+        rows: DEFAULT_FLAGS_HEADER_ROWS,
+        columns: totalColumns,
+        fillColor: flagsHeaderFill,
+        fontColor: flagsHeaderFontColor,
       },
       constantsBlock: {
         startRow: constantsStartRow,
