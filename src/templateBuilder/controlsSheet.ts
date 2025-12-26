@@ -202,6 +202,8 @@ export async function createControlsSheet(spec: ControlsSheetSpec): Promise<void
     sheet.getRange("B19").format.font.bold = true;
     sheet.getRange("B27").values = [["Quarterly timeline"]];
     sheet.getRange("B27").format.font.bold = true;
+    sheet.getRange("B43").values = [["Monthly flags"]];
+    sheet.getRange("B43").format.font.bold = true;
 
     sheet.getRange("B20:B25").values = [
       ["Start Date"],
@@ -226,6 +228,19 @@ export async function createControlsSheet(spec: ControlsSheetSpec): Promise<void
       ["Period type"],
       ["Period counter"],
     ];
+    sheet.getRange("B44:B53").values = [
+      ["Month"],
+      ["Days"],
+      ["Actuals Flag"],
+      ["Forecast Flag"],
+      ["First Forecast Flag"],
+      ["Forecast Counter"],
+      ["Last Actuals Flag"],
+      ["Year counter"],
+      ["Financial Year End Flag"],
+      ["Quarter counter"],
+    ];
+    sheet.getRange("B54:B56").values = [["Placeholder"], ["Placeholder"], ["Placeholder"]];
     sheet.getRange("I20:I25").values = [
       ["Date"],
       ["Date"],
@@ -236,6 +251,20 @@ export async function createControlsSheet(spec: ControlsSheetSpec): Promise<void
     ];
     sheet.getRange("I28:I31").values = [["Date"], ["Date"], ["Counter"], ["Label"]];
     sheet.getRange("I34:I38").values = [["Date"], ["Date"], ["#"], ["Label"], ["Counter"]];
+    sheet.getRange("I44:I53").values = [
+      ["#"],
+      ["#"],
+      ["1/0"],
+      ["1/0"],
+      ["1/0"],
+      ["#"],
+      ["1/0"],
+      ["#"],
+      ["1/0"],
+      ["#"],
+    ];
+    sheet.getRange("I44:I53").numberFormat = Array.from({ length: 10 }, () => ["@"]);
+    sheet.getRange("I44:I53").format.horizontalAlignment = Excel.HorizontalAlignment.left;
 
     const timelineStartColIndex = spec.constantsColumns;
     const timelineFormulaRangeStart = sheet.getRangeByIndexes(
@@ -330,6 +359,66 @@ export async function createControlsSheet(spec: ControlsSheetSpec): Promise<void
       1,
       annualColumns
     );
+    const timelineFormulaRangeFlagsMonth = sheet.getRangeByIndexes(
+      43,
+      timelineStartColIndex,
+      1,
+      spec.timelineColumns
+    );
+    const timelineFormulaRangeFlagsDays = sheet.getRangeByIndexes(
+      44,
+      timelineStartColIndex,
+      1,
+      spec.timelineColumns
+    );
+    const timelineFormulaRangeFlagsActuals = sheet.getRangeByIndexes(
+      45,
+      timelineStartColIndex,
+      1,
+      spec.timelineColumns
+    );
+    const timelineFormulaRangeFlagsForecast = sheet.getRangeByIndexes(
+      46,
+      timelineStartColIndex,
+      1,
+      spec.timelineColumns
+    );
+    const timelineFormulaRangeFlagsFirstForecast = sheet.getRangeByIndexes(
+      47,
+      timelineStartColIndex,
+      1,
+      spec.timelineColumns
+    );
+    const timelineFormulaRangeFlagsForecastCounter = sheet.getRangeByIndexes(
+      48,
+      timelineStartColIndex,
+      1,
+      spec.timelineColumns
+    );
+    const timelineFormulaRangeFlagsLastActuals = sheet.getRangeByIndexes(
+      49,
+      timelineStartColIndex,
+      1,
+      spec.timelineColumns
+    );
+    const timelineFormulaRangeFlagsYearCounter = sheet.getRangeByIndexes(
+      50,
+      timelineStartColIndex,
+      1,
+      spec.timelineColumns
+    );
+    const timelineFormulaRangeFlagsYearEndFlag = sheet.getRangeByIndexes(
+      51,
+      timelineStartColIndex,
+      1,
+      spec.timelineColumns
+    );
+    const timelineFormulaRangeFlagsQuarterCounter = sheet.getRangeByIndexes(
+      52,
+      timelineStartColIndex,
+      1,
+      spec.timelineColumns
+    );
 
     const startDateFormulas: string[] = [];
     const endDateFormulas: string[] = [];
@@ -346,6 +435,16 @@ export async function createControlsSheet(spec: ControlsSheetSpec): Promise<void
     const annualMonthsFormulas: string[] = [];
     const annualTypeFormulas: string[] = [];
     const annualCounterFormulas: string[] = [];
+    const flagsMonthFormulas: string[] = [];
+    const flagsDaysFormulas: string[] = [];
+    const flagsActualsFormulas: string[] = [];
+    const flagsForecastFormulas: string[] = [];
+    const flagsFirstForecastFormulas: string[] = [];
+    const flagsForecastCounterFormulas: string[] = [];
+    const flagsLastActualsFormulas: string[] = [];
+    const flagsYearCounterFormulas: string[] = [];
+    const flagsYearEndFlagFormulas: string[] = [];
+    const flagsQuarterCounterFormulas: string[] = [];
     const timelineStartColumnLetter = columnIndexToLetters(timelineStartColIndex);
     const timelineEndColumnLetter = columnIndexToLetters(
       timelineStartColIndex + spec.timelineColumns - 1
@@ -356,6 +455,7 @@ export async function createControlsSheet(spec: ControlsSheetSpec): Promise<void
       const columnIndex = timelineStartColIndex + i;
       const columnLetter = columnIndexToLetters(columnIndex);
       const prevColumnLetter = columnIndexToLetters(columnIndex - 1);
+      const nextColumnLetter = columnIndexToLetters(columnIndex + 1);
       startDateFormulas.push(
         `=IF(ISBLANK(${prevColumnLetter}20),$C$9,${prevColumnLetter}21+1)`
       );
@@ -391,6 +491,24 @@ export async function createControlsSheet(spec: ControlsSheetSpec): Promise<void
       annualCounterFormulas.push(
         `=IF(ISBLANK(${prevColumnLetter}38),1,${prevColumnLetter}38+1)`
       );
+      flagsMonthFormulas.push(`=MONTH(${columnLetter}20)`);
+      flagsDaysFormulas.push(`=DAY(${columnLetter}21)`);
+      flagsActualsFormulas.push(`=IF(${columnLetter}22=$C$16,1,0)`);
+      flagsForecastFormulas.push(`=1-${columnLetter}46`);
+      flagsFirstForecastFormulas.push(
+        `=IF(AND(${columnLetter}47=1,${prevColumnLetter}47=0),1,0)`
+      );
+      flagsForecastCounterFormulas.push(
+        `=(${prevColumnLetter}49+1)*${columnLetter}47`
+      );
+      flagsLastActualsFormulas.push(
+        `=IF(AND(${columnLetter}46=1,${nextColumnLetter}47=1),1,0)`
+      );
+      flagsYearCounterFormulas.push(`=${columnLetter}24-YEAR($C$9)+1`);
+      flagsYearEndFlagFormulas.push(`=IF(${columnLetter}44=$C$14,1,0)`);
+      flagsQuarterCounterFormulas.push(
+        `=IF(ISBLANK(${prevColumnLetter}53),1,IF(${columnLetter}25=${prevColumnLetter}25,${prevColumnLetter}53,${prevColumnLetter}53+1))`
+      );
     }
 
     timelineFormulaRangeStart.formulas = [startDateFormulas];
@@ -412,6 +530,16 @@ export async function createControlsSheet(spec: ControlsSheetSpec): Promise<void
     timelineFormulaRangeAnnualMonths.formulas = [annualMonthsFormulas.slice(0, annualColumns)];
     timelineFormulaRangeAnnualType.formulas = [annualTypeFormulas.slice(0, annualColumns)];
     timelineFormulaRangeAnnualCounter.formulas = [annualCounterFormulas.slice(0, annualColumns)];
+    timelineFormulaRangeFlagsMonth.formulas = [flagsMonthFormulas];
+    timelineFormulaRangeFlagsDays.formulas = [flagsDaysFormulas];
+    timelineFormulaRangeFlagsActuals.formulas = [flagsActualsFormulas];
+    timelineFormulaRangeFlagsForecast.formulas = [flagsForecastFormulas];
+    timelineFormulaRangeFlagsFirstForecast.formulas = [flagsFirstForecastFormulas];
+    timelineFormulaRangeFlagsForecastCounter.formulas = [flagsForecastCounterFormulas];
+    timelineFormulaRangeFlagsLastActuals.formulas = [flagsLastActualsFormulas];
+    timelineFormulaRangeFlagsYearCounter.formulas = [flagsYearCounterFormulas];
+    timelineFormulaRangeFlagsYearEndFlag.formulas = [flagsYearEndFlagFormulas];
+    timelineFormulaRangeFlagsQuarterCounter.formulas = [flagsQuarterCounterFormulas];
     timelineFormulaRangeType.format.horizontalAlignment = "Right";
     timelineFormulaRangeQuarter.format.horizontalAlignment = "Right";
     timelineFormulaRangeStart.numberFormat = [
@@ -441,6 +569,8 @@ export async function createControlsSheet(spec: ControlsSheetSpec): Promise<void
     sheet.getRangeByIndexes(27, timelineStartColIndex, 4, quarterlyColumns).format.horizontalAlignment =
       "Right";
     sheet.getRangeByIndexes(33, timelineStartColIndex, 5, annualColumns).format.horizontalAlignment =
+      "Right";
+    sheet.getRangeByIndexes(43, timelineStartColIndex, 10, spec.timelineColumns).format.horizontalAlignment =
       "Right";
 
     sheet.activate();
