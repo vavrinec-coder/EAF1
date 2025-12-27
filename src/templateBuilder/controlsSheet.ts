@@ -78,6 +78,7 @@ export async function createControlsSheet(spec: ControlsSheetSpec): Promise<void
     const totalModelColumns = spec.constantsColumns + spec.timelineColumns;
     sheet.tabColor = spec.tabColor;
     sheet.showGridlines = false;
+    sheet.getRange("A1").select();
     sheet.freezePanes.freezeAt("K6");
 
     const baseRange = sheet.getRange(DEFAULT_SHEET_RANGE);
