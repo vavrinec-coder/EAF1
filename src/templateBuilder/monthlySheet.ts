@@ -79,6 +79,7 @@ export async function createMonthlySheet(spec: MonthlySheetSpec): Promise<void> 
 
     const headerRange = sheet.getRangeByIndexes(0, 0, spec.headerRows, totalModelColumns);
     headerRange.format.fill.color = spec.headerFillColor;
+    headerRange.format.font.color = "#FFFFFF";
 
     sheet.getRange("C1:C5").formulas = [
       ["=Controls!B20"],
