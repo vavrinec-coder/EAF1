@@ -1,6 +1,7 @@
 /* global document, Excel, Office */
 
 import { createControlsSheet, ControlsSheetSpec } from "../templateBuilder/controlsSheet";
+import { createMonthlySheet, MonthlySheetSpec } from "../templateBuilder/monthlySheet";
 
 const MAX_EXCEL_ROWS = 1048576;
 const MAX_EXCEL_COLUMNS = 16384;
@@ -32,6 +33,8 @@ let widthColIInputEl: HTMLInputElement;
 let widthColJInputEl: HTMLInputElement;
 let createControlsButtonEl: HTMLButtonElement;
 let controlsTabColorInputEl: HTMLInputElement;
+let createMonthlyButtonEl: HTMLButtonElement;
+let monthlyTabColorInputEl: HTMLInputElement;
 let timeHeaderTitleInputEl: HTMLInputElement;
 let timeHeaderFillInputEl: HTMLInputElement;
 let timeHeaderFontColorInputEl: HTMLInputElement;
@@ -88,6 +91,8 @@ Office.onReady((info) => {
   controlsTabColorInputEl = document.getElementById(
     "controls-tab-color"
   ) as HTMLInputElement;
+  createMonthlyButtonEl = document.getElementById("create-monthly-sheet") as HTMLButtonElement;
+  monthlyTabColorInputEl = document.getElementById("monthly-tab-color") as HTMLInputElement;
   timeHeaderTitleInputEl = document.getElementById("time-header-title") as HTMLInputElement;
   timeHeaderFillInputEl = document.getElementById("time-header-fill") as HTMLInputElement;
   timeHeaderFontColorInputEl = document.getElementById("time-header-font-color") as HTMLInputElement;
@@ -119,6 +124,9 @@ Office.onReady((info) => {
   });
   createControlsButtonEl.addEventListener("click", () => {
     void handleCreateControlsSheet();
+  });
+  createMonthlyButtonEl.addEventListener("click", () => {
+    void handleCreateMonthlySheet();
   });
   constantsTimelineLengthInputEl.addEventListener("input", () => {
     timelineLengthDirty = constantsTimelineLengthInputEl.value.trim().length > 0;
@@ -273,6 +281,23 @@ async function handleCreateControlsSheet(): Promise<void> {
   try {
     await createControlsSheet(result.spec);
     setStatus('Created "Controls" sheet.', "info");
+  } catch (error) {
+    setStatus(getErrorMessage(error), "error");
+  }
+}
+
+async function handleCreateMonthlySheet(): Promise<void> {
+  const result = getMonthlySheetSpecFromForm();
+  if (!result.ok) {
+    setStatus(result.error, "error");
+    return;
+  }
+
+  setStatus('Creating "Monthly" sheet...', "info");
+
+  try {
+    await createMonthlySheet(result.spec);
+    setStatus('Created "Monthly" sheet.', "info");
   } catch (error) {
     setStatus(getErrorMessage(error), "error");
   }
@@ -475,6 +500,108 @@ function getControlsSheetSpecFromForm(): ControlsSheetFormResult {
         financialYearEndMonth,
         historicalPeriod,
         forecastPeriod,
+      },
+    },
+  };
+}
+
+type MonthlySheetFormResult =
+  | { ok: true; spec: MonthlySheetSpec }
+  | { ok: false; error: string };
+
+function getMonthlySheetSpecFromForm(): MonthlySheetFormResult {
+  const constantsColumns = DEFAULT_CONSTANTS_COLUMNS;
+
+  const timelineColumns = parsePositiveInt(timelineColumnsInputEl.value);
+  if (timelineColumns === null) {
+    return { ok: false, error: "Columns for timeline must be a whole number of 1 or greater." };
+  }
+
+  const totalColumns = constantsColumns + timelineColumns;
+  if (totalColumns > MAX_EXCEL_COLUMNS) {
+    return { ok: false, error: "Total model columns exceed Excel column limits." };
+  }
+
+  const fontName = modelFontNameInputEl.value.trim();
+  if (!fontName) {
+    return { ok: false, error: "Font name is required." };
+  }
+
+  const fontColor = modelFontColorInputEl.value.trim();
+  if (!isValidHexColor(fontColor)) {
+    return { ok: false, error: "Font color must be a valid hex value (e.g., #000000)." };
+  }
+
+  const fontSize = parsePositiveNumber(modelFontSizeInputEl.value);
+  if (fontSize === null) {
+    return { ok: false, error: "Font size must be a number greater than 0." };
+  }
+
+  const headerRows = parsePositiveInt(modelHeaderRowsInputEl.value);
+  if (headerRows === null) {
+    return { ok: false, error: "Number of rows for sheet header must be 1 or greater." };
+  }
+
+  const headerFillColor = modelHeaderBackgroundInputEl.value.trim();
+  if (!isValidHexColor(headerFillColor)) {
+    return { ok: false, error: "Sheet header background must be a valid hex value." };
+  }
+
+  const widthA = parseNonNegativeNumber(widthColAInputEl.value);
+  const widthB = parseNonNegativeNumber(widthColBInputEl.value);
+  const widthC = parseNonNegativeNumber(widthColCInputEl.value);
+  const widthD = parseNonNegativeNumber(widthColDInputEl.value);
+  const widthE = parseNonNegativeNumber(widthColEInputEl.value);
+  const widthF = parseNonNegativeNumber(widthColFInputEl.value);
+  const widthG = parseNonNegativeNumber(widthColGInputEl.value);
+  const widthH = parseNonNegativeNumber(widthColHInputEl.value);
+  const widthI = parseNonNegativeNumber(widthColIInputEl.value);
+  const widthJ = parseNonNegativeNumber(widthColJInputEl.value);
+
+  if (
+    widthA === null ||
+    widthB === null ||
+    widthC === null ||
+    widthD === null ||
+    widthE === null ||
+    widthF === null ||
+    widthG === null ||
+    widthH === null ||
+    widthI === null ||
+    widthJ === null
+  ) {
+    return { ok: false, error: "Column widths must be numbers of 0 or greater." };
+  }
+
+  const tabColor = monthlyTabColorInputEl.value.trim();
+  if (!isValidHexColor(tabColor)) {
+    return { ok: false, error: "Tab color must be a valid hex value." };
+  }
+
+  return {
+    ok: true,
+    spec: {
+      constantsColumns,
+      timelineColumns,
+      tabColor,
+      font: {
+        name: fontName,
+        color: fontColor,
+        size: fontSize,
+      },
+      headerRows,
+      headerFillColor,
+      columnWidths: {
+        A: widthA,
+        B: widthB,
+        C: widthC,
+        D: widthD,
+        E: widthE,
+        F: widthF,
+        G: widthG,
+        H: widthH,
+        I: widthI,
+        J: widthJ,
       },
     },
   };
