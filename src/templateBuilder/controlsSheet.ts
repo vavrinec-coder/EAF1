@@ -619,7 +619,6 @@ export async function createControlsSheet(spec: ControlsSheetSpec): Promise<void
       "Right";
 
     sheet.activate();
-    sheet.freezePanes.freezeAt(sheet.getRange("L6"));
     await context.sync();
   });
 }
