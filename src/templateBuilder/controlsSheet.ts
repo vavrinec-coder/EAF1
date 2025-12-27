@@ -204,6 +204,10 @@ export async function createControlsSheet(spec: ControlsSheetSpec): Promise<void
     sheet.getRange("B27").format.font.bold = true;
     sheet.getRange("B43").values = [["Monthly flags"]];
     sheet.getRange("B43").format.font.bold = true;
+    sheet.getRange("B58").values = [["Quarterly flags"]];
+    sheet.getRange("B58").format.font.bold = true;
+    sheet.getRange("B61").values = [["Annual flags"]];
+    sheet.getRange("B61").format.font.bold = true;
 
     sheet.getRange("B20:B25").values = [
       ["Start Date"],
@@ -240,6 +244,8 @@ export async function createControlsSheet(spec: ControlsSheetSpec): Promise<void
       ["Financial Year End Flag"],
       ["Quarter counter"],
     ];
+    sheet.getRange("B59").values = [["Quarter End Column on monthly timeline"]];
+    sheet.getRange("B62").values = [["Year End Column on monthly timeline"]];
     sheet.getRange("B54:B56").values = [["Placeholder"], ["Placeholder"], ["Placeholder"]];
     sheet.getRange("I20:I25").values = [
       ["Date"],
@@ -263,6 +269,8 @@ export async function createControlsSheet(spec: ControlsSheetSpec): Promise<void
       ["'1/0"],
       ["#"],
     ];
+    sheet.getRange("I59").values = [["#"]];
+    sheet.getRange("I62").values = [["#"]];
     sheet.getRange("I44:I53").numberFormat = Array.from({ length: 10 }, () => ["@"]);
     sheet.getRange("I44:I53").format.horizontalAlignment = Excel.HorizontalAlignment.left;
 
@@ -359,6 +367,18 @@ export async function createControlsSheet(spec: ControlsSheetSpec): Promise<void
       1,
       annualColumns
     );
+    const timelineFormulaRangeQuarterlyFlagMatch = sheet.getRangeByIndexes(
+      58,
+      timelineStartColIndex,
+      1,
+      quarterlyColumns
+    );
+    const timelineFormulaRangeAnnualFlagMatch = sheet.getRangeByIndexes(
+      61,
+      timelineStartColIndex,
+      1,
+      annualColumns
+    );
     const timelineFormulaRangeFlagsMonth = sheet.getRangeByIndexes(
       43,
       timelineStartColIndex,
@@ -435,6 +455,8 @@ export async function createControlsSheet(spec: ControlsSheetSpec): Promise<void
     const annualMonthsFormulas: string[] = [];
     const annualTypeFormulas: string[] = [];
     const annualCounterFormulas: string[] = [];
+    const quarterlyFlagMatchFormulas: string[] = [];
+    const annualFlagMatchFormulas: string[] = [];
     const flagsMonthFormulas: string[] = [];
     const flagsDaysFormulas: string[] = [];
     const flagsActualsFormulas: string[] = [];
@@ -451,6 +473,7 @@ export async function createControlsSheet(spec: ControlsSheetSpec): Promise<void
     );
     const timelineQuarterRange = `$${timelineStartColumnLetter}25:$${timelineEndColumnLetter}25`;
     const timelineMatchRange = `$${timelineStartColumnLetter}21:$${timelineEndColumnLetter}21`;
+    const timelineMatchRangeAbsolute = `$${timelineStartColumnLetter}$21:$${timelineEndColumnLetter}$21`;
     for (let i = 0; i < spec.timelineColumns; i += 1) {
       const columnIndex = timelineStartColIndex + i;
       const columnLetter = columnIndexToLetters(columnIndex);
@@ -491,6 +514,10 @@ export async function createControlsSheet(spec: ControlsSheetSpec): Promise<void
       annualCounterFormulas.push(
         `=IF(ISBLANK(${prevColumnLetter}38),1,${prevColumnLetter}38+1)`
       );
+      quarterlyFlagMatchFormulas.push(
+        `=MATCH(${columnLetter}29,${timelineMatchRangeAbsolute},0)`
+      );
+      annualFlagMatchFormulas.push(`=MATCH(${columnLetter}35,${timelineMatchRangeAbsolute},0)`);
       flagsMonthFormulas.push(`=MONTH(${columnLetter}20)`);
       flagsDaysFormulas.push(`=DAY(${columnLetter}21)`);
       flagsActualsFormulas.push(`=IF(${columnLetter}22=$C$16,1,0)`);
@@ -530,6 +557,10 @@ export async function createControlsSheet(spec: ControlsSheetSpec): Promise<void
     timelineFormulaRangeAnnualMonths.formulas = [annualMonthsFormulas.slice(0, annualColumns)];
     timelineFormulaRangeAnnualType.formulas = [annualTypeFormulas.slice(0, annualColumns)];
     timelineFormulaRangeAnnualCounter.formulas = [annualCounterFormulas.slice(0, annualColumns)];
+    timelineFormulaRangeQuarterlyFlagMatch.formulas = [
+      quarterlyFlagMatchFormulas.slice(0, quarterlyColumns),
+    ];
+    timelineFormulaRangeAnnualFlagMatch.formulas = [annualFlagMatchFormulas.slice(0, annualColumns)];
     timelineFormulaRangeFlagsMonth.formulas = [flagsMonthFormulas];
     timelineFormulaRangeFlagsDays.formulas = [flagsDaysFormulas];
     timelineFormulaRangeFlagsActuals.formulas = [flagsActualsFormulas];
@@ -571,6 +602,10 @@ export async function createControlsSheet(spec: ControlsSheetSpec): Promise<void
     sheet.getRangeByIndexes(33, timelineStartColIndex, 5, annualColumns).format.horizontalAlignment =
       "Right";
     sheet.getRangeByIndexes(43, timelineStartColIndex, 10, spec.timelineColumns).format.horizontalAlignment =
+      "Right";
+    sheet.getRangeByIndexes(58, timelineStartColIndex, 1, quarterlyColumns).format.horizontalAlignment =
+      "Right";
+    sheet.getRangeByIndexes(61, timelineStartColIndex, 1, annualColumns).format.horizontalAlignment =
       "Right";
 
     sheet.activate();
