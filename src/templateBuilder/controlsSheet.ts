@@ -3,6 +3,7 @@
 export type ControlsSheetSpec = {
   constantsColumns: number;
   timelineColumns: number;
+  tabColor: string;
   font: {
     name: string;
     color: string;
@@ -53,6 +54,8 @@ const DEFAULT_SHEET_RANGE = "A1:ZZ200";
 const COLUMN_HIDE_LIMIT = 200;
 const DATE_NUMBER_FORMAT = "[$-en-US]d/mmm/yy;@";
 const DEFAULT_TIMELINE_COLUMN_WIDTH = 12;
+const MAX_EXCEL_COLUMNS = 16384;
+const MAX_EXCEL_ROWS = 1048576;
 
 export async function createControlsSheet(spec: ControlsSheetSpec): Promise<void> {
   await Excel.run(async (context) => {
@@ -73,6 +76,9 @@ export async function createControlsSheet(spec: ControlsSheetSpec): Promise<void
     }
 
     const totalModelColumns = spec.constantsColumns + spec.timelineColumns;
+    sheet.tabColor = spec.tabColor;
+    sheet.showGridlines = false;
+    sheet.freezePanes.freezeAt("K6");
 
     const baseRange = sheet.getRange(DEFAULT_SHEET_RANGE);
     baseRange.format.font.name = spec.font.name;
@@ -93,6 +99,11 @@ export async function createControlsSheet(spec: ControlsSheetSpec): Promise<void
       const hiddenCount = COLUMN_HIDE_LIMIT - totalModelColumns;
       const hiddenRange = sheet.getRangeByIndexes(0, hiddenStart - 1, 1, hiddenCount);
       hiddenRange.format.columnHidden = true;
+    }
+    if (totalModelColumns < MAX_EXCEL_COLUMNS) {
+      const clearColumnCount = MAX_EXCEL_COLUMNS - totalModelColumns;
+      const clearRange = sheet.getRangeByIndexes(0, totalModelColumns, MAX_EXCEL_ROWS, clearColumnCount);
+      clearRange.clear(Excel.ClearApplyTo.all);
     }
 
     const headerRange = sheet.getRangeByIndexes(0, 0, spec.headerRows, totalModelColumns);

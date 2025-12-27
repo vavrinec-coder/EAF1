@@ -31,6 +31,7 @@ let widthColHInputEl: HTMLInputElement;
 let widthColIInputEl: HTMLInputElement;
 let widthColJInputEl: HTMLInputElement;
 let createControlsButtonEl: HTMLButtonElement;
+let controlsTabColorInputEl: HTMLInputElement;
 let timeHeaderTitleInputEl: HTMLInputElement;
 let timeHeaderFillInputEl: HTMLInputElement;
 let timeHeaderFontColorInputEl: HTMLInputElement;
@@ -84,6 +85,9 @@ Office.onReady((info) => {
   widthColIInputEl = document.getElementById("width-col-i") as HTMLInputElement;
   widthColJInputEl = document.getElementById("width-col-j") as HTMLInputElement;
   createControlsButtonEl = document.getElementById("create-controls-sheet") as HTMLButtonElement;
+  controlsTabColorInputEl = document.getElementById(
+    "controls-tab-color"
+  ) as HTMLInputElement;
   timeHeaderTitleInputEl = document.getElementById("time-header-title") as HTMLInputElement;
   timeHeaderFillInputEl = document.getElementById("time-header-fill") as HTMLInputElement;
   timeHeaderFontColorInputEl = document.getElementById("time-header-font-color") as HTMLInputElement;
@@ -417,11 +421,17 @@ function getControlsSheetSpecFromForm(): ControlsSheetFormResult {
     return { ok: false, error: "Column widths must be numbers of 0 or greater." };
   }
 
+  const tabColor = controlsTabColorInputEl.value.trim();
+  if (!isValidHexColor(tabColor)) {
+    return { ok: false, error: "Tab color must be a valid hex value." };
+  }
+
   return {
     ok: true,
     spec: {
       constantsColumns,
       timelineColumns,
+      tabColor,
       font: {
         name: fontName,
         color: fontColor,
