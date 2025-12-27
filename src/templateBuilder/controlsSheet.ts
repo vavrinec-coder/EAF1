@@ -79,6 +79,7 @@ export async function createControlsSheet(spec: ControlsSheetSpec): Promise<void
     sheet.tabColor = spec.tabColor;
     sheet.showGridlines = false;
     sheet.getRange("A1").select();
+    sheet.freezePanes.unfreeze();
     sheet.freezePanes.freezeAt("K6");
 
     const baseRange = sheet.getRange(DEFAULT_SHEET_RANGE);
