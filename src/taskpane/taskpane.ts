@@ -40,8 +40,10 @@ let monthlyTabColorInputEl: HTMLInputElement;
 let monthlySectionColorInputEl: HTMLInputElement;
 let createQuarterlyButtonEl: HTMLButtonElement;
 let quarterlyTabColorInputEl: HTMLInputElement;
+let quarterlySectionColorInputEl: HTMLInputElement;
 let createAnnualButtonEl: HTMLButtonElement;
 let annualTabColorInputEl: HTMLInputElement;
+let annualSectionColorInputEl: HTMLInputElement;
 let timeHeaderTitleInputEl: HTMLInputElement;
 let timeHeaderFillInputEl: HTMLInputElement;
 let timeHeaderFontColorInputEl: HTMLInputElement;
@@ -107,8 +109,12 @@ Office.onReady((info) => {
     "create-quarterly-sheet"
   ) as HTMLButtonElement;
   quarterlyTabColorInputEl = document.getElementById("quarterly-tab-color") as HTMLInputElement;
+  quarterlySectionColorInputEl = document.getElementById(
+    "quarterly-section-color"
+  ) as HTMLInputElement;
   createAnnualButtonEl = document.getElementById("create-annual-sheet") as HTMLButtonElement;
   annualTabColorInputEl = document.getElementById("annual-tab-color") as HTMLInputElement;
+  annualSectionColorInputEl = document.getElementById("annual-section-color") as HTMLInputElement;
   timeHeaderTitleInputEl = document.getElementById("time-header-title") as HTMLInputElement;
   timeHeaderFillInputEl = document.getElementById("time-header-fill") as HTMLInputElement;
   timeHeaderFontColorInputEl = document.getElementById("time-header-font-color") as HTMLInputElement;
@@ -743,12 +749,18 @@ function getQuarterlySheetSpecFromForm(): QuarterlySheetFormResult {
     return { ok: false, error: "Tab color must be a valid hex value." };
   }
 
+  const sectionColor = quarterlySectionColorInputEl.value.trim();
+  if (!isValidHexColor(sectionColor)) {
+    return { ok: false, error: "Section color must be a valid hex value." };
+  }
+
   return {
     ok: true,
     spec: {
       constantsColumns,
       timelineColumns,
       tabColor,
+      sectionColor,
       font: {
         name: fontName,
         color: fontColor,
@@ -846,12 +858,18 @@ function getAnnualSheetSpecFromForm(): AnnualSheetFormResult {
     return { ok: false, error: "Tab color must be a valid hex value." };
   }
 
+  const sectionColor = annualSectionColorInputEl.value.trim();
+  if (!isValidHexColor(sectionColor)) {
+    return { ok: false, error: "Section color must be a valid hex value." };
+  }
+
   return {
     ok: true,
     spec: {
       constantsColumns,
       timelineColumns,
       tabColor,
+      sectionColor,
       font: {
         name: fontName,
         color: fontColor,
