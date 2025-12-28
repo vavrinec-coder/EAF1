@@ -257,6 +257,8 @@ export async function createControlsSheet(spec: ControlsSheetSpec): Promise<void
     sheet.getRange("B64").format.font.bold = true;
     sheet.getRange("B65").values = [["Year End Column on monthly timeline"]];
     sheet.getRange("B54:B56").values = [["Placeholder"], ["Placeholder"], ["Placeholder"]];
+    sheet.getRange("B60:B62").values = [["Placeholer"], ["Placeholer"], ["Placeholer"]];
+    sheet.getRange("B66:B68").values = [["Placeholder"], ["Placeholder"], ["Placeholder"]];
     sheet.getRange("I20:I25").values = [
       ["Date"],
       ["Date"],
