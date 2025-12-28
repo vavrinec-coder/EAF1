@@ -32,9 +32,15 @@ const DEFAULT_TIMELINE_COLUMN_WIDTH = 12;
 export async function createQuarterlySheet(spec: QuarterlySheetSpec): Promise<void> {
   await Excel.run(async (context) => {
     const worksheets = context.workbook.worksheets;
+    const controlsSheet = worksheets.getItemOrNullObject("Controls");
+    controlsSheet.load("name");
     let sheet = worksheets.getItemOrNullObject("Quarterly");
     sheet.load("name");
     await context.sync();
+
+    if (controlsSheet.isNullObject) {
+      throw new Error('Controls sheet not found. Create the "Controls" sheet first.');
+    }
 
     if (sheet.isNullObject) {
       sheet = worksheets.add("Quarterly");
