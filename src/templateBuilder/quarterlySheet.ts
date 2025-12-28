@@ -73,6 +73,82 @@ export async function createQuarterlySheet(spec: QuarterlySheetSpec): Promise<vo
 
     const headerRange = sheet.getRangeByIndexes(0, 0, spec.headerRows, totalModelColumns);
     headerRange.format.fill.color = spec.headerFillColor;
+    headerRange.format.font.color = "#FFFFFF";
+
+    sheet.getRange("C1:C4").formulas = [
+      ["=Controls!B28"],
+      ["=Controls!B29"],
+      ["=Controls!B30"],
+      ["=Controls!B31"],
+    ];
+    sheet.getRange("C1:C4").format.font.color = "#FFFFFF";
+
+    const timelineStartColIndex = spec.constantsColumns;
+    const timelineFormulaRangeStart = sheet.getRangeByIndexes(
+      0,
+      timelineStartColIndex,
+      1,
+      spec.timelineColumns
+    );
+    const timelineFormulaRangeEnd = sheet.getRangeByIndexes(
+      1,
+      timelineStartColIndex,
+      1,
+      spec.timelineColumns
+    );
+    const timelineFormulaRangeCounter = sheet.getRangeByIndexes(
+      2,
+      timelineStartColIndex,
+      1,
+      spec.timelineColumns
+    );
+    const timelineFormulaRangeQuarter = sheet.getRangeByIndexes(
+      3,
+      timelineStartColIndex,
+      1,
+      spec.timelineColumns
+    );
+
+    const controlsTimelineStart = controlsSheet.getRangeByIndexes(
+      27,
+      timelineStartColIndex,
+      1,
+      spec.timelineColumns
+    );
+    const controlsTimelineEnd = controlsSheet.getRangeByIndexes(
+      28,
+      timelineStartColIndex,
+      1,
+      spec.timelineColumns
+    );
+    controlsTimelineStart.load("numberFormat");
+    controlsTimelineEnd.load("numberFormat");
+
+    const startDateFormulas: string[] = [];
+    const endDateFormulas: string[] = [];
+    const counterFormulas: string[] = [];
+    const quarterFormulas: string[] = [];
+
+    for (let i = 0; i < spec.timelineColumns; i += 1) {
+      const columnIndex = timelineStartColIndex + i;
+      const columnLetter = columnIndexToLetters(columnIndex);
+      startDateFormulas.push(`=Controls!${columnLetter}28`);
+      endDateFormulas.push(`=Controls!${columnLetter}29`);
+      counterFormulas.push(`=Controls!${columnLetter}30`);
+      quarterFormulas.push(`=Controls!${columnLetter}31`);
+    }
+
+    timelineFormulaRangeStart.formulas = [startDateFormulas];
+    timelineFormulaRangeEnd.formulas = [endDateFormulas];
+    timelineFormulaRangeCounter.formulas = [counterFormulas];
+    timelineFormulaRangeQuarter.formulas = [quarterFormulas];
+
+    sheet.getRangeByIndexes(0, timelineStartColIndex, 4, spec.timelineColumns).format.horizontalAlignment =
+      "Right";
+
+    await context.sync();
+    timelineFormulaRangeStart.numberFormat = controlsTimelineStart.numberFormat;
+    timelineFormulaRangeEnd.numberFormat = controlsTimelineEnd.numberFormat;
 
     sheet.activate();
     await context.sync();
@@ -118,4 +194,17 @@ function applyTimelineColumnWidths(
 function toColumnWidthPoints(width: number): number {
   const pixels = Math.floor(width * 7 + 5);
   return pixels * 0.75;
+}
+
+function columnIndexToLetters(index: number): string {
+  let value = index + 1;
+  let letters = "";
+
+  while (value > 0) {
+    const remainder = (value - 1) % 26;
+    letters = String.fromCharCode(65 + remainder) + letters;
+    value = Math.floor((value - 1) / 26);
+  }
+
+  return letters;
 }
