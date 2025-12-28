@@ -32,9 +32,15 @@ const DEFAULT_TIMELINE_COLUMN_WIDTH = 12;
 export async function createAnnualSheet(spec: AnnualSheetSpec): Promise<void> {
   await Excel.run(async (context) => {
     const worksheets = context.workbook.worksheets;
+    const controlsSheet = worksheets.getItemOrNullObject("Controls");
+    controlsSheet.load("name");
     let sheet = worksheets.getItemOrNullObject("Annual");
     sheet.load("name");
     await context.sync();
+
+    if (controlsSheet.isNullObject) {
+      throw new Error('Controls sheet not found. Create the "Controls" sheet first.');
+    }
 
     if (sheet.isNullObject) {
       sheet = worksheets.add("Annual");
@@ -73,6 +79,82 @@ export async function createAnnualSheet(spec: AnnualSheetSpec): Promise<void> {
 
     const headerRange = sheet.getRangeByIndexes(0, 0, spec.headerRows, totalModelColumns);
     headerRange.format.fill.color = spec.headerFillColor;
+    headerRange.format.font.color = "#FFFFFF";
+
+    sheet.getRange("C1:C4").formulas = [
+      ["=Controls!B34"],
+      ["=Controls!B35"],
+      ["=Controls!B37"],
+      ["=Controls!B38"],
+    ];
+    sheet.getRange("C1:C4").format.font.color = "#FFFFFF";
+
+    const timelineStartColIndex = spec.constantsColumns;
+    const timelineFormulaRangeStart = sheet.getRangeByIndexes(
+      0,
+      timelineStartColIndex,
+      1,
+      spec.timelineColumns
+    );
+    const timelineFormulaRangeEnd = sheet.getRangeByIndexes(
+      1,
+      timelineStartColIndex,
+      1,
+      spec.timelineColumns
+    );
+    const timelineFormulaRangeType = sheet.getRangeByIndexes(
+      2,
+      timelineStartColIndex,
+      1,
+      spec.timelineColumns
+    );
+    const timelineFormulaRangeCounter = sheet.getRangeByIndexes(
+      3,
+      timelineStartColIndex,
+      1,
+      spec.timelineColumns
+    );
+
+    const controlsTimelineStart = controlsSheet.getRangeByIndexes(
+      33,
+      timelineStartColIndex,
+      1,
+      spec.timelineColumns
+    );
+    const controlsTimelineEnd = controlsSheet.getRangeByIndexes(
+      34,
+      timelineStartColIndex,
+      1,
+      spec.timelineColumns
+    );
+    controlsTimelineStart.load("numberFormat");
+    controlsTimelineEnd.load("numberFormat");
+
+    const startDateFormulas: string[] = [];
+    const endDateFormulas: string[] = [];
+    const periodTypeFormulas: string[] = [];
+    const periodCounterFormulas: string[] = [];
+
+    for (let i = 0; i < spec.timelineColumns; i += 1) {
+      const columnIndex = timelineStartColIndex + i;
+      const columnLetter = columnIndexToLetters(columnIndex);
+      startDateFormulas.push(`=Controls!${columnLetter}34`);
+      endDateFormulas.push(`=Controls!${columnLetter}35`);
+      periodTypeFormulas.push(`=Controls!${columnLetter}37`);
+      periodCounterFormulas.push(`=Controls!${columnLetter}38`);
+    }
+
+    timelineFormulaRangeStart.formulas = [startDateFormulas];
+    timelineFormulaRangeEnd.formulas = [endDateFormulas];
+    timelineFormulaRangeType.formulas = [periodTypeFormulas];
+    timelineFormulaRangeCounter.formulas = [periodCounterFormulas];
+
+    sheet.getRangeByIndexes(0, timelineStartColIndex, 4, spec.timelineColumns).format.horizontalAlignment =
+      "Right";
+
+    await context.sync();
+    timelineFormulaRangeStart.numberFormat = controlsTimelineStart.numberFormat;
+    timelineFormulaRangeEnd.numberFormat = controlsTimelineEnd.numberFormat;
 
     sheet.activate();
     await context.sync();
@@ -118,4 +200,17 @@ function applyTimelineColumnWidths(
 function toColumnWidthPoints(width: number): number {
   const pixels = Math.floor(width * 7 + 5);
   return pixels * 0.75;
+}
+
+function columnIndexToLetters(index: number): string {
+  let value = index + 1;
+  let letters = "";
+
+  while (value > 0) {
+    const remainder = (value - 1) % 26;
+    letters = String.fromCharCode(65 + remainder) + letters;
+    value = Math.floor((value - 1) / 26);
+  }
+
+  return letters;
 }
