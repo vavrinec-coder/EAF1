@@ -4,6 +4,7 @@ export type MonthlySheetSpec = {
   constantsColumns: number;
   timelineColumns: number;
   tabColor: string;
+  sectionColor: string;
   font: {
     name: string;
     color: string;
@@ -28,6 +29,8 @@ export type MonthlySheetSpec = {
 const DEFAULT_SHEET_RANGE = "A1:ZZ200";
 const COLUMN_HIDE_LIMIT = 200;
 const DEFAULT_TIMELINE_COLUMN_WIDTH = 12;
+const MAX_EXCEL_COLUMNS = 16384;
+const MAX_EXCEL_ROWS = 1048576;
 
 export async function createMonthlySheet(spec: MonthlySheetSpec): Promise<void> {
   await Excel.run(async (context) => {
@@ -55,6 +58,7 @@ export async function createMonthlySheet(spec: MonthlySheetSpec): Promise<void> 
 
     const totalModelColumns = spec.constantsColumns + spec.timelineColumns;
     sheet.tabColor = spec.tabColor;
+    sheet.showGridlines = false;
 
     const baseRange = sheet.getRange(DEFAULT_SHEET_RANGE);
     baseRange.format.font.name = spec.font.name;
@@ -80,6 +84,11 @@ export async function createMonthlySheet(spec: MonthlySheetSpec): Promise<void> 
     const headerRange = sheet.getRangeByIndexes(0, 0, spec.headerRows, totalModelColumns);
     headerRange.format.fill.color = spec.headerFillColor;
     headerRange.format.font.color = "#FFFFFF";
+
+    const sectionRange = sheet.getRangeByIndexes(6, 0, 1, totalModelColumns);
+    sectionRange.format.fill.color = spec.sectionColor;
+    sheet.getRange("B7").values = [["MODEL FLAGS"]];
+    sheet.getRange("B7").format.font.color = "#FFFFFF";
 
     sheet.getRange("C1:C5").formulas = [
       ["=Controls!B20"],
@@ -164,6 +173,42 @@ export async function createMonthlySheet(spec: MonthlySheetSpec): Promise<void> 
     await context.sync();
     timelineFormulaRangeStart.numberFormat = controlsTimelineStart.numberFormat;
     timelineFormulaRangeEnd.numberFormat = controlsTimelineEnd.numberFormat;
+
+    const controlsFlagLabelRange = sheet.getRange("B9:B21");
+    const controlsFlagUnitRange = sheet.getRange("I9:I21");
+    const controlsFlagTimelineRange = sheet.getRangeByIndexes(
+      8,
+      timelineStartColIndex,
+      13,
+      spec.timelineColumns
+    );
+
+    const flagLabelFormulas: string[][] = [];
+    const flagUnitFormulas: string[][] = [];
+    const flagTimelineFormulas: string[][] = [];
+    for (let rowOffset = 0; rowOffset < 13; rowOffset += 1) {
+      const controlsRow = 44 + rowOffset;
+      flagLabelFormulas.push([`=Controls!B${controlsRow}`]);
+      flagUnitFormulas.push([`=Controls!I${controlsRow}`]);
+
+      const rowFormulas: string[] = [];
+      for (let columnOffset = 0; columnOffset < spec.timelineColumns; columnOffset += 1) {
+        const columnIndex = timelineStartColIndex + columnOffset;
+        const columnLetter = columnIndexToLetters(columnIndex);
+        rowFormulas.push(`=Controls!${columnLetter}${controlsRow}`);
+      }
+      flagTimelineFormulas.push(rowFormulas);
+    }
+
+    controlsFlagLabelRange.formulas = flagLabelFormulas;
+    controlsFlagUnitRange.formulas = flagUnitFormulas;
+    controlsFlagTimelineRange.formulas = flagTimelineFormulas;
+
+    if (totalModelColumns < MAX_EXCEL_COLUMNS) {
+      const clearColumnCount = MAX_EXCEL_COLUMNS - totalModelColumns;
+      const clearRange = sheet.getRangeByIndexes(0, totalModelColumns, MAX_EXCEL_ROWS, clearColumnCount);
+      clearRange.clear(Excel.ClearApplyTo.all);
+    }
 
     sheet.activate();
     await context.sync();

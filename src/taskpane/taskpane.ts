@@ -37,6 +37,7 @@ let createControlsButtonEl: HTMLButtonElement;
 let controlsTabColorInputEl: HTMLInputElement;
 let createMonthlyButtonEl: HTMLButtonElement;
 let monthlyTabColorInputEl: HTMLInputElement;
+let monthlySectionColorInputEl: HTMLInputElement;
 let createQuarterlyButtonEl: HTMLButtonElement;
 let quarterlyTabColorInputEl: HTMLInputElement;
 let createAnnualButtonEl: HTMLButtonElement;
@@ -99,6 +100,9 @@ Office.onReady((info) => {
   ) as HTMLInputElement;
   createMonthlyButtonEl = document.getElementById("create-monthly-sheet") as HTMLButtonElement;
   monthlyTabColorInputEl = document.getElementById("monthly-tab-color") as HTMLInputElement;
+  monthlySectionColorInputEl = document.getElementById(
+    "monthly-section-color"
+  ) as HTMLInputElement;
   createQuarterlyButtonEl = document.getElementById(
     "create-quarterly-sheet"
   ) as HTMLButtonElement;
@@ -630,12 +634,18 @@ function getMonthlySheetSpecFromForm(): MonthlySheetFormResult {
     return { ok: false, error: "Tab color must be a valid hex value." };
   }
 
+  const sectionColor = monthlySectionColorInputEl.value.trim();
+  if (!isValidHexColor(sectionColor)) {
+    return { ok: false, error: "Section color must be a valid hex value." };
+  }
+
   return {
     ok: true,
     spec: {
       constantsColumns,
       timelineColumns,
       tabColor,
+      sectionColor,
       font: {
         name: fontName,
         color: fontColor,
