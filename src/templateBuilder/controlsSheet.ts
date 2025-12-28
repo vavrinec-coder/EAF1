@@ -216,8 +216,6 @@ export async function createControlsSheet(spec: ControlsSheetSpec): Promise<void
     sheet.getRange("B43").format.font.bold = true;
     sheet.getRange("B58").values = [["Quarterly flags"]];
     sheet.getRange("B58").format.font.bold = true;
-    sheet.getRange("B61").values = [["Annual flags"]];
-    sheet.getRange("B61").format.font.bold = true;
 
     sheet.getRange("B20:B25").values = [
       ["Start Date"],
@@ -255,7 +253,9 @@ export async function createControlsSheet(spec: ControlsSheetSpec): Promise<void
       ["Quarter counter"],
     ];
     sheet.getRange("B59").values = [["Quarter End Column on monthly timeline"]];
-    sheet.getRange("B62").values = [["Year End Column on monthly timeline"]];
+    sheet.getRange("B64").values = [["Annual flags"]];
+    sheet.getRange("B64").format.font.bold = true;
+    sheet.getRange("B65").values = [["Year End Column on monthly timeline"]];
     sheet.getRange("B54:B56").values = [["Placeholder"], ["Placeholder"], ["Placeholder"]];
     sheet.getRange("I20:I25").values = [
       ["Date"],
@@ -280,7 +280,7 @@ export async function createControlsSheet(spec: ControlsSheetSpec): Promise<void
       ["#"],
     ];
     sheet.getRange("I59").values = [["#"]];
-    sheet.getRange("I62").values = [["#"]];
+    sheet.getRange("I65").values = [["#"]];
     sheet.getRange("I44:I53").numberFormat = Array.from({ length: 10 }, () => ["@"]);
     sheet.getRange("I44:I53").format.horizontalAlignment = Excel.HorizontalAlignment.left;
 
@@ -384,7 +384,7 @@ export async function createControlsSheet(spec: ControlsSheetSpec): Promise<void
       quarterlyColumns
     );
     const timelineFormulaRangeAnnualFlagMatch = sheet.getRangeByIndexes(
-      61,
+      64,
       timelineStartColIndex,
       1,
       annualColumns
@@ -615,7 +615,7 @@ export async function createControlsSheet(spec: ControlsSheetSpec): Promise<void
       "Right";
     sheet.getRangeByIndexes(58, timelineStartColIndex, 1, quarterlyColumns).format.horizontalAlignment =
       "Right";
-    sheet.getRangeByIndexes(61, timelineStartColIndex, 1, annualColumns).format.horizontalAlignment =
+    sheet.getRangeByIndexes(64, timelineStartColIndex, 1, annualColumns).format.horizontalAlignment =
       "Right";
 
     sheet.activate();

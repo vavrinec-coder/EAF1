@@ -203,6 +203,7 @@ export async function createMonthlySheet(spec: MonthlySheetSpec): Promise<void> 
     controlsFlagLabelRange.formulas = flagLabelFormulas;
     controlsFlagUnitRange.formulas = flagUnitFormulas;
     controlsFlagTimelineRange.formulas = flagTimelineFormulas;
+    controlsFlagUnitRange.format.horizontalAlignment = Excel.HorizontalAlignment.left;
 
     if (totalModelColumns < MAX_EXCEL_COLUMNS) {
       const clearColumnCount = MAX_EXCEL_COLUMNS - totalModelColumns;
