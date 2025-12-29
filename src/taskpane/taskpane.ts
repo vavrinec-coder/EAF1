@@ -284,7 +284,7 @@ async function handleUnpivot(): Promise<void> {
         for (const columnIndex of unpivotColumnIndices) {
           const row: Excel.RangeValueType[] = [];
           for (const idIndex of idColumnIndices) {
-            row.push(values[rowIndex][idIndex]);
+            row.push(normalizeUnpivotIdValue(values[rowIndex][idIndex]));
           }
           row.push(headers[columnIndex], values[rowIndex][columnIndex]);
           output.push(row);
@@ -1201,6 +1201,14 @@ function getUniqueSheetName(existingNames: string[], baseName: string): string {
   }
 
   return `${baseName} ${suffix}`;
+}
+
+function normalizeUnpivotIdValue(value: Excel.RangeValueType): Excel.RangeValueType {
+  if (typeof value === "string") {
+    return value.trim();
+  }
+
+  return value;
 }
 
 function setStatus(message: string, kind: "info" | "error"): void {
