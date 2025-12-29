@@ -1,0 +1,135 @@
+/* global Excel */
+
+export type CoaSheetSpec = {
+  constantsColumns: number;
+  timelineColumns: number;
+  tabColor: string;
+  sectionColor: string;
+  font: {
+    name: string;
+    color: string;
+    size: number;
+  };
+  headerRows: number;
+  headerFillColor: string;
+  columnWidths: {
+    A: number;
+    B: number;
+    C: number;
+    D: number;
+    E: number;
+    F: number;
+    G: number;
+    H: number;
+    I: number;
+    J: number;
+  };
+};
+
+const DEFAULT_SHEET_RANGE = "A1:ZZ200";
+const COLUMN_HIDE_LIMIT = 200;
+const DEFAULT_TIMELINE_COLUMN_WIDTH = 12;
+const MAX_EXCEL_COLUMNS = 16384;
+const MAX_EXCEL_ROWS = 1048576;
+
+export async function createCoaSheet(spec: CoaSheetSpec): Promise<void> {
+  await Excel.run(async (context) => {
+    const worksheets = context.workbook.worksheets;
+    let sheet = worksheets.getItemOrNullObject("COA");
+    sheet.load("name");
+    await context.sync();
+
+    if (sheet.isNullObject) {
+      sheet = worksheets.add("COA");
+    } else {
+      const usedRange = sheet.getUsedRangeOrNullObject();
+      usedRange.load("address");
+      await context.sync();
+      if (!usedRange.isNullObject) {
+        usedRange.clear();
+      }
+    }
+
+    const totalModelColumns = spec.constantsColumns + spec.timelineColumns;
+    sheet.tabColor = spec.tabColor;
+    sheet.showGridlines = false;
+
+    const baseRange = sheet.getRange(DEFAULT_SHEET_RANGE);
+    baseRange.format.font.name = spec.font.name;
+    baseRange.format.font.size = spec.font.size;
+    baseRange.format.font.color = spec.font.color;
+
+    applyColumnWidths(sheet, spec.columnWidths);
+    applyTimelineColumnWidths(sheet, spec.constantsColumns, spec.timelineColumns);
+
+    const visibleColumnCount = Math.min(totalModelColumns, COLUMN_HIDE_LIMIT);
+    if (visibleColumnCount > 0) {
+      const visibleRange = sheet.getRangeByIndexes(0, 0, 1, visibleColumnCount);
+      visibleRange.format.columnHidden = false;
+    }
+
+    if (totalModelColumns + 1 <= COLUMN_HIDE_LIMIT) {
+      const hiddenStart = totalModelColumns + 1;
+      const hiddenCount = COLUMN_HIDE_LIMIT - totalModelColumns;
+      const hiddenRange = sheet.getRangeByIndexes(0, hiddenStart - 1, 1, hiddenCount);
+      hiddenRange.format.columnHidden = true;
+    }
+
+    const headerRange = sheet.getRangeByIndexes(0, 0, spec.headerRows, totalModelColumns);
+    headerRange.format.fill.color = spec.headerFillColor;
+    headerRange.format.font.color = "#FFFFFF";
+
+    const sectionRange = sheet.getRangeByIndexes(6, 0, 1, totalModelColumns);
+    sectionRange.format.fill.color = spec.sectionColor;
+
+    if (totalModelColumns < MAX_EXCEL_COLUMNS) {
+      const clearColumnCount = MAX_EXCEL_COLUMNS - totalModelColumns;
+      const clearRange = sheet.getRangeByIndexes(0, totalModelColumns, MAX_EXCEL_ROWS, clearColumnCount);
+      clearRange.clear(Excel.ClearApplyTo.all);
+    }
+
+    sheet.activate();
+    await context.sync();
+  });
+}
+
+function applyColumnWidths(
+  sheet: Excel.Worksheet,
+  widths: CoaSheetSpec["columnWidths"]
+): void {
+  const columns: Array<[string, number]> = [
+    ["A", widths.A],
+    ["B", widths.B],
+    ["C", widths.C],
+    ["D", widths.D],
+    ["E", widths.E],
+    ["F", widths.F],
+    ["G", widths.G],
+    ["H", widths.H],
+    ["I", widths.I],
+    ["J", widths.J],
+  ];
+
+  columns.forEach(([column, width]) => {
+    sheet.getRange(`${column}:${column}`).format.columnWidth = toColumnWidthPoints(width);
+  });
+}
+
+function applyTimelineColumnWidths(
+  sheet: Excel.Worksheet,
+  constantsColumns: number,
+  timelineColumns: number
+): void {
+  if (timelineColumns <= 0) {
+    return;
+  }
+
+  const startIndex = constantsColumns;
+  const range = sheet.getRangeByIndexes(0, startIndex, 1, timelineColumns);
+  range.format.columnWidth = toColumnWidthPoints(DEFAULT_TIMELINE_COLUMN_WIDTH);
+}
+
+function toColumnWidthPoints(width: number): number {
+  const pixels = Math.floor(width * 7 + 5);
+  return pixels * 0.75;
+}
