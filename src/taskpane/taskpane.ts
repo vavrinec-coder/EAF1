@@ -2,7 +2,6 @@
 
 import { createControlsSheet, ControlsSheetSpec } from "../templateBuilder/controlsSheet";
 import { createMonthlySheet, MonthlySheetSpec } from "../templateBuilder/monthlySheet";
-import { createCoaSheet, CoaSheetSpec } from "../templateBuilder/coaSheet";
 import { createQuarterlySheet, QuarterlySheetSpec } from "../templateBuilder/quarterlySheet";
 import { createAnnualSheet, AnnualSheetSpec } from "../templateBuilder/annualSheet";
 
@@ -39,15 +38,13 @@ let controlsTabColorInputEl: HTMLInputElement;
 let createMonthlyButtonEl: HTMLButtonElement;
 let monthlyTabColorInputEl: HTMLInputElement;
 let monthlySectionColorInputEl: HTMLInputElement;
-let createCoaButtonEl: HTMLButtonElement;
-let coaTabColorInputEl: HTMLInputElement;
-let coaSectionColorInputEl: HTMLInputElement;
 let createQuarterlyButtonEl: HTMLButtonElement;
 let quarterlyTabColorInputEl: HTMLInputElement;
 let quarterlySectionColorInputEl: HTMLInputElement;
 let createAnnualButtonEl: HTMLButtonElement;
 let annualTabColorInputEl: HTMLInputElement;
 let annualSectionColorInputEl: HTMLInputElement;
+let simplifyTextButtonEl: HTMLButtonElement;
 let timeHeaderTitleInputEl: HTMLInputElement;
 let timeHeaderFillInputEl: HTMLInputElement;
 let timeHeaderFontColorInputEl: HTMLInputElement;
@@ -83,6 +80,7 @@ Office.onReady((info) => {
 
   const loadButton = document.getElementById("load-selection") as HTMLButtonElement;
   const unpivotButton = document.getElementById("unpivot") as HTMLButtonElement;
+  simplifyTextButtonEl = document.getElementById("simplify-text") as HTMLButtonElement;
 
   timelineColumnsInputEl = document.getElementById("model-timeline-columns") as HTMLInputElement;
   modelFontNameInputEl = document.getElementById("model-font-name") as HTMLInputElement;
@@ -109,9 +107,6 @@ Office.onReady((info) => {
   monthlySectionColorInputEl = document.getElementById(
     "monthly-section-color"
   ) as HTMLInputElement;
-  createCoaButtonEl = document.getElementById("create-coa-sheet") as HTMLButtonElement;
-  coaTabColorInputEl = document.getElementById("coa-tab-color") as HTMLInputElement;
-  coaSectionColorInputEl = document.getElementById("coa-section-color") as HTMLInputElement;
   createQuarterlyButtonEl = document.getElementById(
     "create-quarterly-sheet"
   ) as HTMLButtonElement;
@@ -151,14 +146,14 @@ Office.onReady((info) => {
   unpivotButton.addEventListener("click", () => {
     void handleUnpivot();
   });
+  simplifyTextButtonEl.addEventListener("click", () => {
+    void handleSimplifyText();
+  });
   createControlsButtonEl.addEventListener("click", () => {
     void handleCreateControlsSheet();
   });
   createMonthlyButtonEl.addEventListener("click", () => {
     void handleCreateMonthlySheet();
-  });
-  createCoaButtonEl.addEventListener("click", () => {
-    void handleCreateCoaSheet();
   });
   createQuarterlyButtonEl.addEventListener("click", () => {
     void handleCreateQuarterlySheet();
@@ -307,6 +302,53 @@ async function handleUnpivot(): Promise<void> {
   }
 }
 
+async function handleSimplifyText(): Promise<void> {
+  const fontName = modelFontNameInputEl.value.trim();
+  if (!fontName) {
+    setStatus("Font name is required.", "error");
+    return;
+  }
+
+  const fontColor = modelFontColorInputEl.value.trim();
+  if (!isValidHexColor(fontColor)) {
+    setStatus("Font color must be a valid hex value (e.g., #000000).", "error");
+    return;
+  }
+
+  const fontSize = parsePositiveNumber(modelFontSizeInputEl.value);
+  if (fontSize === null) {
+    setStatus("Font size must be a number greater than 0.", "error");
+    return;
+  }
+
+  setStatus("Simplifying text...", "info");
+
+  try {
+    await Excel.run(async (context) => {
+      const range = context.workbook.getSelectedRange();
+      range.load(["values"]);
+      await context.sync();
+
+      range.values = range.values.map((row) =>
+        row.map((value) => (typeof value === "string" ? value.trim() : value))
+      );
+
+      range.format.font.name = fontName;
+      range.format.font.color = fontColor;
+      range.format.font.size = fontSize;
+      range.format.indentLevel = 0;
+      range.format.fill.clear();
+      clearBorders(range.format.borders);
+
+      await context.sync();
+    });
+
+    setStatus("Simplified text.", "info");
+  } catch (error) {
+    setStatus(getErrorMessage(error), "error");
+  }
+}
+
 async function handleCreateControlsSheet(): Promise<void> {
   const result = getControlsSheetSpecFromForm();
   if (!result.ok) {
@@ -336,23 +378,6 @@ async function handleCreateMonthlySheet(): Promise<void> {
   try {
     await createMonthlySheet(result.spec);
     setStatus('Created "Monthly" sheet.', "info");
-  } catch (error) {
-    setStatus(getErrorMessage(error), "error");
-  }
-}
-
-async function handleCreateCoaSheet(): Promise<void> {
-  const result = getCoaSheetSpecFromForm();
-  if (!result.ok) {
-    setStatus(result.error, "error");
-    return;
-  }
-
-  setStatus('Creating "COA" sheet...', "info");
-
-  try {
-    await createCoaSheet(result.spec);
-    setStatus('Created "COA" sheet.', "info");
   } catch (error) {
     setStatus(getErrorMessage(error), "error");
   }
@@ -668,114 +693,6 @@ function getMonthlySheetSpecFromForm(): MonthlySheetFormResult {
   }
 
   const sectionColor = monthlySectionColorInputEl.value.trim();
-  if (!isValidHexColor(sectionColor)) {
-    return { ok: false, error: "Section color must be a valid hex value." };
-  }
-
-  return {
-    ok: true,
-    spec: {
-      constantsColumns,
-      timelineColumns,
-      tabColor,
-      sectionColor,
-      font: {
-        name: fontName,
-        color: fontColor,
-        size: fontSize,
-      },
-      headerRows,
-      headerFillColor,
-      columnWidths: {
-        A: widthA,
-        B: widthB,
-        C: widthC,
-        D: widthD,
-        E: widthE,
-        F: widthF,
-        G: widthG,
-        H: widthH,
-        I: widthI,
-        J: widthJ,
-      },
-    },
-  };
-}
-
-type CoaSheetFormResult =
-  | { ok: true; spec: CoaSheetSpec }
-  | { ok: false; error: string };
-
-function getCoaSheetSpecFromForm(): CoaSheetFormResult {
-  const constantsColumns = DEFAULT_CONSTANTS_COLUMNS;
-
-  const timelineColumns = parsePositiveInt(timelineColumnsInputEl.value);
-  if (timelineColumns === null) {
-    return { ok: false, error: "Columns for timeline must be a whole number of 1 or greater." };
-  }
-
-  const totalColumns = constantsColumns + timelineColumns;
-  if (totalColumns > MAX_EXCEL_COLUMNS) {
-    return { ok: false, error: "Total model columns exceed Excel column limits." };
-  }
-
-  const fontName = modelFontNameInputEl.value.trim();
-  if (!fontName) {
-    return { ok: false, error: "Font name is required." };
-  }
-
-  const fontColor = modelFontColorInputEl.value.trim();
-  if (!isValidHexColor(fontColor)) {
-    return { ok: false, error: "Font color must be a valid hex value (e.g., #000000)." };
-  }
-
-  const fontSize = parsePositiveNumber(modelFontSizeInputEl.value);
-  if (fontSize === null) {
-    return { ok: false, error: "Font size must be a number greater than 0." };
-  }
-
-  const headerRows = parsePositiveInt(modelHeaderRowsInputEl.value);
-  if (headerRows === null) {
-    return { ok: false, error: "Number of rows for sheet header must be 1 or greater." };
-  }
-
-  const headerFillColor = modelHeaderBackgroundInputEl.value.trim();
-  if (!isValidHexColor(headerFillColor)) {
-    return { ok: false, error: "Sheet header background must be a valid hex value." };
-  }
-
-  const widthA = parseNonNegativeNumber(widthColAInputEl.value);
-  const widthB = parseNonNegativeNumber(widthColBInputEl.value);
-  const widthC = parseNonNegativeNumber(widthColCInputEl.value);
-  const widthD = parseNonNegativeNumber(widthColDInputEl.value);
-  const widthE = parseNonNegativeNumber(widthColEInputEl.value);
-  const widthF = parseNonNegativeNumber(widthColFInputEl.value);
-  const widthG = parseNonNegativeNumber(widthColGInputEl.value);
-  const widthH = parseNonNegativeNumber(widthColHInputEl.value);
-  const widthI = parseNonNegativeNumber(widthColIInputEl.value);
-  const widthJ = parseNonNegativeNumber(widthColJInputEl.value);
-
-  if (
-    widthA === null ||
-    widthB === null ||
-    widthC === null ||
-    widthD === null ||
-    widthE === null ||
-    widthF === null ||
-    widthG === null ||
-    widthH === null ||
-    widthI === null ||
-    widthJ === null
-  ) {
-    return { ok: false, error: "Column widths must be numbers of 0 or greater." };
-  }
-
-  const tabColor = coaTabColorInputEl.value.trim();
-  if (!isValidHexColor(tabColor)) {
-    return { ok: false, error: "Tab color must be a valid hex value." };
-  }
-
-  const sectionColor = coaSectionColorInputEl.value.trim();
   if (!isValidHexColor(sectionColor)) {
     return { ok: false, error: "Section color must be a valid hex value." };
   }
@@ -1209,6 +1126,24 @@ function normalizeUnpivotIdValue(value: Excel.RangeValueType): Excel.RangeValueT
   }
 
   return value;
+}
+
+function clearBorders(borders: Excel.RangeBorderCollection): void {
+  const borderIndexes: Excel.BorderIndex[] = [
+    Excel.BorderIndex.edgeTop,
+    Excel.BorderIndex.edgeBottom,
+    Excel.BorderIndex.edgeLeft,
+    Excel.BorderIndex.edgeRight,
+    Excel.BorderIndex.insideHorizontal,
+    Excel.BorderIndex.insideVertical,
+    Excel.BorderIndex.diagonalDown,
+    Excel.BorderIndex.diagonalUp,
+  ];
+
+  borderIndexes.forEach((index) => {
+    const border = borders.getItem(index);
+    border.style = Excel.BorderLineStyle.none;
+  });
 }
 
 function setStatus(message: string, kind: "info" | "error"): void {
