@@ -49,6 +49,7 @@ let createAnnualButtonEl: HTMLButtonElement;
 let annualTabColorInputEl: HTMLInputElement;
 let annualSectionColorInputEl: HTMLInputElement;
 let simplifyTextButtonEl: HTMLButtonElement;
+let loadLineItemCategoriesButtonEl: HTMLButtonElement;
 let timeHeaderTitleInputEl: HTMLInputElement;
 let timeHeaderFillInputEl: HTMLInputElement;
 let timeHeaderFontColorInputEl: HTMLInputElement;
@@ -85,6 +86,9 @@ Office.onReady((info) => {
   const loadButton = document.getElementById("load-selection") as HTMLButtonElement;
   const unpivotButton = document.getElementById("unpivot") as HTMLButtonElement;
   simplifyTextButtonEl = document.getElementById("simplify-text") as HTMLButtonElement;
+  loadLineItemCategoriesButtonEl = document.getElementById(
+    "load-line-item-categories"
+  ) as HTMLButtonElement;
 
   timelineColumnsInputEl = document.getElementById("model-timeline-columns") as HTMLInputElement;
   modelFontNameInputEl = document.getElementById("model-font-name") as HTMLInputElement;
@@ -161,6 +165,9 @@ Office.onReady((info) => {
   });
   simplifyTextButtonEl.addEventListener("click", () => {
     void handleSimplifyText();
+  });
+  loadLineItemCategoriesButtonEl.addEventListener("click", () => {
+    void handleLoadLineItemCategories();
   });
   createControlsButtonEl.addEventListener("click", () => {
     void handleCreateControlsSheet();
@@ -362,6 +369,44 @@ async function handleSimplifyText(): Promise<void> {
     });
 
     setStatus("Simplified text.", "info");
+  } catch (error) {
+    setStatus(getErrorMessage(error), "error");
+  }
+}
+
+async function handleLoadLineItemCategories(): Promise<void> {
+  setStatus("Loading line item categories...", "info");
+
+  try {
+    await Excel.run(async (context) => {
+      const range = context.workbook.getSelectedRange();
+      range.load(["rowIndex", "rowCount", "columnIndex", "columnCount"]);
+      await context.sync();
+
+      if (range.columnCount !== 1 || range.columnIndex !== 1) {
+        throw new Error("Select a single-column range in column B.");
+      }
+
+      if (range.rowCount < 1) {
+        throw new Error("Select at least one row in column B.");
+      }
+
+      const targetRange = range.getOffsetRange(0, 3);
+      const defaultValues = Array.from({ length: range.rowCount }, () => ["Detail"]);
+      targetRange.values = defaultValues;
+      targetRange.dataValidation.rule = {
+        list: {
+          inCellDropDown: true,
+          source: "Detail,SubTotal,Total,GrandTotal",
+        },
+      };
+      targetRange.format.font.color = "#FFFFFF";
+      targetRange.format.fill.color = "#782170";
+
+      await context.sync();
+    });
+
+    setStatus("Loaded line item categories.", "info");
   } catch (error) {
     setStatus(getErrorMessage(error), "error");
   }
