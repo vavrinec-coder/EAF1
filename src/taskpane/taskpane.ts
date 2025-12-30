@@ -336,6 +336,8 @@ async function handleSimplifyText(): Promise<void> {
       range.format.font.name = fontName;
       range.format.font.color = fontColor;
       range.format.font.size = fontSize;
+      range.format.font.bold = false;
+      range.format.horizontalAlignment = Excel.HorizontalAlignment.left;
       range.format.indentLevel = 0;
       range.format.fill.clear();
       clearBorders(range.format.borders);
