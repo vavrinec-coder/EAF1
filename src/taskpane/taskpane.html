@@ -397,6 +397,72 @@
                     </div>
                 </div>
             </details>
+            <details class="collapsible">
+                <summary class="collapsible-summary">FS formatting</summary>
+                <div class="collapsible-body">
+                    <details class="collapsible collapsible--nested">
+                        <summary class="collapsible-summary">Detail</summary>
+                        <div class="collapsible-body">
+                            <div class="template-form">
+                                <div class="form-row">
+                                    <div class="form-field">
+                                        <label class="form-label" for="fs-detail-bold">Bold</label>
+                                        <select id="fs-detail-bold" class="form-input">
+                                            <option value="false" selected>False</option>
+                                            <option value="true">True</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-field">
+                                        <label class="form-label" for="fs-detail-indent">Ident</label>
+                                        <input
+                                            id="fs-detail-indent"
+                                            class="form-input"
+                                            type="number"
+                                            min="0"
+                                            value="3"
+                                        />
+                                    </div>
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-field">
+                                        <label class="form-label" for="fs-detail-font-color">Font color</label>
+                                        <input
+                                            id="fs-detail-font-color"
+                                            class="form-input"
+                                            type="text"
+                                            value="#000000"
+                                        />
+                                    </div>
+                                    <div class="form-field">
+                                        <label class="form-label" for="fs-detail-fill-color">Fill color</label>
+                                        <input id="fs-detail-fill-color" class="form-input" type="text" value="" />
+                                    </div>
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-field">
+                                        <label class="form-label" for="fs-detail-border-line">Border line</label>
+                                        <select id="fs-detail-border-line" class="form-input">
+                                            <option value="none" selected>none</option>
+                                            <option value="bottom-single">bottom single</option>
+                                            <option value="bottom-double">bottom double</option>
+                                            <option value="top-single-bottom-double">top single/bottom double</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-field">
+                                        <label class="form-label" for="fs-detail-number-format">Number format</label>
+                                        <input
+                                            id="fs-detail-number-format"
+                                            class="form-input"
+                                            type="text"
+                                            value="#,##0;[Red]-#,##0;&quot;-&quot;"
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </details>
+                </div>
+            </details>
         </div>
 
         <details class="collapsible">
