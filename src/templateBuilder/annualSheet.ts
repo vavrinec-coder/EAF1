@@ -87,8 +87,9 @@ export async function createAnnualSheet(spec: AnnualSheetSpec): Promise<void> {
 
     const sectionRange = sheet.getRangeByIndexes(6, 0, 1, totalModelColumns);
     sectionRange.format.fill.color = spec.sectionColor;
-    sheet.getRange("B7").values = [["MODEL FLAGS"]];
-    sheet.getRange("B7").format.font.color = "#FFFFFF";
+    sheet.getRange("A7").values = [["MODEL FLAGS"]];
+    sheet.getRange("A7").format.font.color = "#FFFFFF";
+    sheet.getRange("B7").values = [[""]];
 
     sheet.getRange("C1:C4").formulas = [
       ["=Controls!B34"],
