@@ -51,6 +51,7 @@ let annualSectionColorInputEl: HTMLInputElement;
 let simplifyTextButtonEl: HTMLButtonElement;
 let loadLineItemCategoriesButtonEl: HTMLButtonElement;
 let updateFsFormattingButtonEl: HTMLButtonElement;
+let destinationRangeInputEl: HTMLInputElement;
 let timeHeaderTitleInputEl: HTMLInputElement;
 let timeHeaderFillInputEl: HTMLInputElement;
 let timeHeaderFontColorInputEl: HTMLInputElement;
@@ -65,6 +66,7 @@ let flagsHeaderFillInputEl: HTMLInputElement;
 let flagsHeaderFontColorInputEl: HTMLInputElement;
 
 let timelineLengthDirty = false;
+let destinationRangeArmed = false;
 
 Office.onReady((info) => {
   if (info.host !== Office.HostType.Excel) {
@@ -93,6 +95,9 @@ Office.onReady((info) => {
   updateFsFormattingButtonEl = document.getElementById(
     "update-fs-formatting"
   ) as HTMLButtonElement;
+  destinationRangeInputEl = document.getElementById(
+    "match-destination-range"
+  ) as HTMLInputElement;
 
   timelineColumnsInputEl = document.getElementById("model-timeline-columns") as HTMLInputElement;
   modelFontNameInputEl = document.getElementById("model-font-name") as HTMLInputElement;
@@ -176,6 +181,9 @@ Office.onReady((info) => {
   updateFsFormattingButtonEl.addEventListener("click", () => {
     void handleUpdateFsFormatting();
   });
+  destinationRangeInputEl.addEventListener("input", () => {
+    destinationRangeArmed = destinationRangeInputEl.value.trim() === "=";
+  });
   createControlsButtonEl.addEventListener("click", () => {
     void handleCreateControlsSheet();
   });
@@ -197,6 +205,15 @@ Office.onReady((info) => {
   timelineColumnsInputEl.addEventListener("input", () => {
     syncDerivedDefaults();
   });
+  Office.context.document.addHandlerAsync(
+    Office.EventType.DocumentSelectionChanged,
+    () => {
+      if (!destinationRangeArmed) {
+        return;
+      }
+      void updateDestinationRangeFromSelection();
+    }
+  );
 
   renderHeaders([]);
   setStatus("Ready. Select a range and click Load Selection.", "info");
@@ -493,6 +510,21 @@ async function handleUpdateFsFormatting(): Promise<void> {
     });
 
     setStatus("Updated FS formatting.", "info");
+  } catch (error) {
+    setStatus(getErrorMessage(error), "error");
+  }
+}
+
+async function updateDestinationRangeFromSelection(): Promise<void> {
+  try {
+    await Excel.run(async (context) => {
+      const range = context.workbook.getSelectedRange();
+      range.load("address");
+      await context.sync();
+
+      destinationRangeInputEl.value = `=${range.address}`;
+      destinationRangeArmed = false;
+    });
   } catch (error) {
     setStatus(getErrorMessage(error), "error");
   }
