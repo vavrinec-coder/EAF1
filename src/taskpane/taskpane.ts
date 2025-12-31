@@ -397,7 +397,7 @@ async function handleLoadLineItemCategories(): Promise<void> {
       targetRange.dataValidation.rule = {
         list: {
           inCellDropDown: true,
-          source: "Detail,SubTotal,Total,GrandTotal",
+          source: "Detail,SubTotal,Total,GrandTotal,SubTotal Header,Total Header,GrandTotal Header",
         },
       };
       targetRange.format.font.color = "#FFFFFF";

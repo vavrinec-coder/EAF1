@@ -480,7 +480,7 @@
                                             class="form-input"
                                             type="number"
                                             min="0"
-                                            value="2"
+                                            value="3"
                                         />
                                     </div>
                                 </div>
@@ -635,6 +635,189 @@
                                         <label class="form-label" for="fs-grandtotal-number-format">Number format</label>
                                         <input
                                             id="fs-grandtotal-number-format"
+                                            class="form-input"
+                                            type="text"
+                                            value="#,##0;[Red]-#,##0;&quot;-&quot;"
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </details>
+                    <details class="collapsible collapsible--nested">
+                        <summary class="collapsible-summary">SubTotal Header</summary>
+                        <div class="collapsible-body">
+                            <div class="template-form">
+                                <div class="form-row">
+                                    <div class="form-field">
+                                        <label class="form-label" for="fs-subtotal-header-bold">Bold</label>
+                                        <select id="fs-subtotal-header-bold" class="form-input">
+                                            <option value="false">False</option>
+                                            <option value="true" selected>True</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-field">
+                                        <label class="form-label" for="fs-subtotal-header-indent">Ident</label>
+                                        <input
+                                            id="fs-subtotal-header-indent"
+                                            class="form-input"
+                                            type="number"
+                                            min="0"
+                                            value="3"
+                                        />
+                                    </div>
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-field">
+                                        <label class="form-label" for="fs-subtotal-header-font-color">Font color</label>
+                                        <input
+                                            id="fs-subtotal-header-font-color"
+                                            class="form-input"
+                                            type="text"
+                                            value="#000000"
+                                        />
+                                    </div>
+                                    <div class="form-field">
+                                        <label class="form-label" for="fs-subtotal-header-fill-color">Fill color</label>
+                                        <input id="fs-subtotal-header-fill-color" class="form-input" type="text" value="" />
+                                    </div>
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-field">
+                                        <label class="form-label" for="fs-subtotal-header-border-line">Border line</label>
+                                        <select id="fs-subtotal-header-border-line" class="form-input">
+                                            <option value="none" selected>none</option>
+                                            <option value="top-single">top single</option>
+                                            <option value="top-double">top double</option>
+                                            <option value="top-double-bottom-double">top double/bottom double</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-field">
+                                        <label class="form-label" for="fs-subtotal-header-number-format">Number format</label>
+                                        <input
+                                            id="fs-subtotal-header-number-format"
+                                            class="form-input"
+                                            type="text"
+                                            value="#,##0;[Red]-#,##0;&quot;-&quot;"
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </details>
+                    <details class="collapsible collapsible--nested">
+                        <summary class="collapsible-summary">Total Header</summary>
+                        <div class="collapsible-body">
+                            <div class="template-form">
+                                <div class="form-row">
+                                    <div class="form-field">
+                                        <label class="form-label" for="fs-total-header-bold">Bold</label>
+                                        <select id="fs-total-header-bold" class="form-input">
+                                            <option value="false">False</option>
+                                            <option value="true" selected>True</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-field">
+                                        <label class="form-label" for="fs-total-header-indent">Ident</label>
+                                        <input
+                                            id="fs-total-header-indent"
+                                            class="form-input"
+                                            type="number"
+                                            min="0"
+                                            value="1"
+                                        />
+                                    </div>
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-field">
+                                        <label class="form-label" for="fs-total-header-font-color">Font color</label>
+                                        <input
+                                            id="fs-total-header-font-color"
+                                            class="form-input"
+                                            type="text"
+                                            value="#000000"
+                                        />
+                                    </div>
+                                    <div class="form-field">
+                                        <label class="form-label" for="fs-total-header-fill-color">Fill color</label>
+                                        <input id="fs-total-header-fill-color" class="form-input" type="text" value="" />
+                                    </div>
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-field">
+                                        <label class="form-label" for="fs-total-header-border-line">Border line</label>
+                                        <select id="fs-total-header-border-line" class="form-input">
+                                            <option value="none" selected>none</option>
+                                            <option value="top-single">top single</option>
+                                            <option value="top-double">top double</option>
+                                            <option value="top-double-bottom-double">top double/bottom double</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-field">
+                                        <label class="form-label" for="fs-total-header-number-format">Number format</label>
+                                        <input
+                                            id="fs-total-header-number-format"
+                                            class="form-input"
+                                            type="text"
+                                            value="#,##0;[Red]-#,##0;&quot;-&quot;"
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </details>
+                    <details class="collapsible collapsible--nested">
+                        <summary class="collapsible-summary">GrandTotal Header</summary>
+                        <div class="collapsible-body">
+                            <div class="template-form">
+                                <div class="form-row">
+                                    <div class="form-field">
+                                        <label class="form-label" for="fs-grandtotal-header-bold">Bold</label>
+                                        <select id="fs-grandtotal-header-bold" class="form-input">
+                                            <option value="false">False</option>
+                                            <option value="true" selected>True</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-field">
+                                        <label class="form-label" for="fs-grandtotal-header-indent">Ident</label>
+                                        <input
+                                            id="fs-grandtotal-header-indent"
+                                            class="form-input"
+                                            type="number"
+                                            min="0"
+                                            value="0"
+                                        />
+                                    </div>
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-field">
+                                        <label class="form-label" for="fs-grandtotal-header-font-color">Font color</label>
+                                        <input
+                                            id="fs-grandtotal-header-font-color"
+                                            class="form-input"
+                                            type="text"
+                                            value="#000000"
+                                        />
+                                    </div>
+                                    <div class="form-field">
+                                        <label class="form-label" for="fs-grandtotal-header-fill-color">Fill color</label>
+                                        <input id="fs-grandtotal-header-fill-color" class="form-input" type="text" value="" />
+                                    </div>
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-field">
+                                        <label class="form-label" for="fs-grandtotal-header-border-line">Border line</label>
+                                        <select id="fs-grandtotal-header-border-line" class="form-input">
+                                            <option value="none" selected>none</option>
+                                            <option value="top-single">top single</option>
+                                            <option value="top-double">top double</option>
+                                            <option value="top-double-bottom-double">top double/bottom double</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-field">
+                                        <label class="form-label" for="fs-grandtotal-header-number-format">Number format</label>
+                                        <input
+                                            id="fs-grandtotal-header-number-format"
                                             class="form-input"
                                             type="text"
                                             value="#,##0;[Red]-#,##0;&quot;-&quot;"
