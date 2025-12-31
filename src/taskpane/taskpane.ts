@@ -621,20 +621,20 @@ async function handleMatchLoadData(): Promise<void> {
       sourceValueColumn.load(["rowCount", "columnCount", "values"]);
       await context.sync();
 
-      if (destinationMappingColumn.rowCount !== 1) {
-        throw new Error("Destination Mapping Column must be a single row.");
+      if (destinationMappingColumn.columnCount !== 1) {
+        throw new Error("Destination Mapping Column must be a single column.");
       }
 
-      if (destinationMappingRow.columnCount !== 1) {
-        throw new Error("Destination Mapping Row must be a single column.");
+      if (destinationMappingRow.rowCount !== 1) {
+        throw new Error("Destination Mapping Row must be a single row.");
       }
 
-      if (destinationMappingColumn.columnCount !== destinationRange.columnCount) {
-        throw new Error("Destination Mapping Column must match Destination Range columns.");
+      if (destinationMappingColumn.rowCount !== destinationRange.rowCount) {
+        throw new Error("Destination Mapping Column must match Destination Range rows.");
       }
 
-      if (destinationMappingRow.rowCount !== destinationRange.rowCount) {
-        throw new Error("Destination Mapping Row must match Destination Range rows.");
+      if (destinationMappingRow.columnCount !== destinationRange.columnCount) {
+        throw new Error("Destination Mapping Row must match Destination Range columns.");
       }
 
       if (sourceMappingColumn.columnCount !== 1 || sourceMappingColumnRow.columnCount !== 1) {
@@ -673,8 +673,8 @@ async function handleMatchLoadData(): Promise<void> {
       );
 
       const destinationValues = destinationRange.values.map((row) => [...row]);
-      const columnKeys = destinationMappingColumn.values[0].map(normalizeKey);
-      const rowKeys = destinationMappingRow.values.map((row) => normalizeKey(row[0]));
+      const columnKeys = destinationMappingRow.values[0].map(normalizeKey);
+      const rowKeys = destinationMappingColumn.values.map((row) => normalizeKey(row[0]));
       const updatedRowFlags = new Array(destinationRange.rowCount).fill(false);
 
       for (let rowIndex = 0; rowIndex < destinationRange.rowCount; rowIndex += 1) {
