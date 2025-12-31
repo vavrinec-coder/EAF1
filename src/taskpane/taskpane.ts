@@ -58,6 +58,7 @@ let sourceRangeInputEl: HTMLInputElement;
 let sourceMappingColumnInputEl: HTMLInputElement;
 let sourceMappingColumnRowInputEl: HTMLInputElement;
 let sourceValueColumnInputEl: HTMLInputElement;
+let matchLoadDataButtonEl: HTMLButtonElement;
 let timeHeaderTitleInputEl: HTMLInputElement;
 let timeHeaderFillInputEl: HTMLInputElement;
 let timeHeaderFontColorInputEl: HTMLInputElement;
@@ -122,6 +123,7 @@ Office.onReady((info) => {
   sourceValueColumnInputEl = document.getElementById(
     "match-source-value-column"
   ) as HTMLInputElement;
+  matchLoadDataButtonEl = document.getElementById("match-load-data") as HTMLButtonElement;
 
   timelineColumnsInputEl = document.getElementById("model-timeline-columns") as HTMLInputElement;
   modelFontNameInputEl = document.getElementById("model-font-name") as HTMLInputElement;
@@ -217,6 +219,9 @@ Office.onReady((info) => {
     inputEl.addEventListener("input", () => {
       armRangeCapture(inputEl);
     });
+  });
+  matchLoadDataButtonEl.addEventListener("click", () => {
+    void handleMatchLoadData();
   });
   createControlsButtonEl.addEventListener("click", () => {
     void handleCreateControlsSheet();
@@ -561,6 +566,160 @@ async function updateRangeInputFromSelection(): Promise<void> {
         activeRangeInputEl = null;
       }
     });
+  } catch (error) {
+    setStatus(getErrorMessage(error), "error");
+  }
+}
+
+async function handleMatchLoadData(): Promise<void> {
+  setStatus("Loading data...", "info");
+
+  try {
+    await Excel.run(async (context) => {
+      const destinationRange = getRangeFromInput(
+        context,
+        destinationRangeInputEl,
+        "Destination Range"
+      );
+      const destinationMappingColumn = getRangeFromInput(
+        context,
+        destinationMappingColumnInputEl,
+        "Destination Mapping Column"
+      );
+      const destinationMappingRow = getRangeFromInput(
+        context,
+        destinationMappingRowInputEl,
+        "Destination Mapping Row"
+      );
+      const sourceRange = getRangeFromInput(
+        context,
+        sourceRangeInputEl,
+        "Source Range"
+      );
+      const sourceMappingColumn = getRangeFromInput(
+        context,
+        sourceMappingColumnInputEl,
+        "Source Mapping Column"
+      );
+      const sourceMappingColumnRow = getRangeFromInput(
+        context,
+        sourceMappingColumnRowInputEl,
+        "Source Mapping Column_Row"
+      );
+      const sourceValueColumn = getRangeFromInput(
+        context,
+        sourceValueColumnInputEl,
+        "Source Value Column"
+      );
+
+      destinationRange.load(["rowIndex", "rowCount", "columnIndex", "columnCount", "values"]);
+      destinationMappingColumn.load(["rowCount", "columnCount", "values"]);
+      destinationMappingRow.load(["rowCount", "columnCount", "values"]);
+      sourceRange.load(["rowCount", "columnCount"]);
+      sourceMappingColumn.load(["rowCount", "columnCount", "values"]);
+      sourceMappingColumnRow.load(["rowCount", "columnCount", "values"]);
+      sourceValueColumn.load(["rowCount", "columnCount", "values"]);
+      await context.sync();
+
+      if (destinationMappingColumn.rowCount !== 1) {
+        throw new Error("Destination Mapping Column must be a single row.");
+      }
+
+      if (destinationMappingRow.columnCount !== 1) {
+        throw new Error("Destination Mapping Row must be a single column.");
+      }
+
+      if (destinationMappingColumn.columnCount !== destinationRange.columnCount) {
+        throw new Error("Destination Mapping Column must match Destination Range columns.");
+      }
+
+      if (destinationMappingRow.rowCount !== destinationRange.rowCount) {
+        throw new Error("Destination Mapping Row must match Destination Range rows.");
+      }
+
+      if (sourceMappingColumn.columnCount !== 1 || sourceMappingColumnRow.columnCount !== 1) {
+        throw new Error("Source Mapping ranges must be a single column.");
+      }
+
+      if (sourceValueColumn.columnCount !== 1) {
+        throw new Error("Source Value Column must be a single column.");
+      }
+
+      if (
+        sourceMappingColumn.rowCount !== sourceMappingColumnRow.rowCount ||
+        sourceMappingColumn.rowCount !== sourceValueColumn.rowCount
+      ) {
+        throw new Error("Source Mapping ranges must match Source Value Column rows.");
+      }
+
+      if (sourceRange.rowCount !== sourceValueColumn.rowCount) {
+        throw new Error("Source Range must match Source Value Column rows.");
+      }
+
+      const destinationSheet = destinationRange.worksheet;
+      const detailRange = destinationSheet.getRangeByIndexes(
+        destinationRange.rowIndex,
+        4,
+        destinationRange.rowCount,
+        1
+      );
+      detailRange.load("values");
+      await context.sync();
+
+      const sourceLookup = buildSourceLookup(
+        sourceMappingColumn.values,
+        sourceMappingColumnRow.values,
+        sourceValueColumn.values
+      );
+
+      const destinationValues = destinationRange.values.map((row) => [...row]);
+      const columnKeys = destinationMappingColumn.values[0].map(normalizeKey);
+      const rowKeys = destinationMappingRow.values.map((row) => normalizeKey(row[0]));
+      const updatedRowFlags = new Array(destinationRange.rowCount).fill(false);
+
+      for (let rowIndex = 0; rowIndex < destinationRange.rowCount; rowIndex += 1) {
+        const detailValue = detailRange.values[rowIndex][0];
+        const isDetail = normalizeKey(detailValue).toLowerCase() === "detail";
+        if (!isDetail) {
+          continue;
+        }
+
+        const rowKey = rowKeys[rowIndex];
+        for (let colIndex = 0; colIndex < destinationRange.columnCount; colIndex += 1) {
+          const colKey = columnKeys[colIndex];
+          if (!rowKey || !colKey) {
+            continue;
+          }
+
+          const matchKey = buildLookupKey(colKey, rowKey);
+          if (!sourceLookup.has(matchKey)) {
+            continue;
+          }
+
+          destinationValues[rowIndex][colIndex] = sourceLookup.get(matchKey) ?? null;
+          updatedRowFlags[rowIndex] = true;
+        }
+      }
+
+      destinationRange.values = destinationValues;
+
+      updatedRowFlags.forEach((updated, rowOffset) => {
+        if (!updated) {
+          return;
+        }
+        const rowRange = destinationSheet.getRangeByIndexes(
+          destinationRange.rowIndex + rowOffset,
+          destinationRange.columnIndex,
+          1,
+          destinationRange.columnCount
+        );
+        rowRange.format.font.color = "#3333FF";
+      });
+
+      await context.sync();
+    });
+
+    setStatus("Loaded data.", "info");
   } catch (error) {
     setStatus(getErrorMessage(error), "error");
   }
@@ -1333,6 +1492,102 @@ function armRangeCapture(inputEl: HTMLInputElement): void {
   if (activeRangeInputEl === inputEl) {
     activeRangeInputEl = null;
   }
+}
+
+function getRangeFromInput(
+  context: Excel.RequestContext,
+  inputEl: HTMLInputElement,
+  label: string
+): Excel.Range {
+  const value = inputEl.value.trim();
+  if (!value || value === "=") {
+    throw new Error(`${label} is required.`);
+  }
+
+  const address = value.startsWith("=") ? value.slice(1).trim() : value;
+  if (!address) {
+    throw new Error(`${label} is required.`);
+  }
+
+  return context.workbook.getRange(address);
+}
+
+function normalizeKey(value: Excel.RangeValueType): string {
+  if (value === null || value === undefined) {
+    return "";
+  }
+
+  return String(value).trim();
+}
+
+type SourceLookupEntry = {
+  hasNumeric: boolean;
+  sum: number;
+  text: string | null;
+};
+
+function buildLookupKey(columnKey: string, rowKey: string): string {
+  return `${columnKey}||${rowKey}`;
+}
+
+function buildSourceLookup(
+  sourceColumns: Excel.RangeValueType[][],
+  sourceRows: Excel.RangeValueType[][],
+  sourceValues: Excel.RangeValueType[][]
+): Map<string, Excel.RangeValueType> {
+  const lookup = new Map<string, SourceLookupEntry>();
+
+  for (let rowIndex = 0; rowIndex < sourceValues.length; rowIndex += 1) {
+    const columnKey = normalizeKey(sourceColumns[rowIndex]?.[0]);
+    const rowKey = normalizeKey(sourceRows[rowIndex]?.[0]);
+    if (!columnKey && !rowKey) {
+      continue;
+    }
+
+    const key = buildLookupKey(columnKey, rowKey);
+    const entry = lookup.get(key) ?? { hasNumeric: false, sum: 0, text: null };
+    const rawValue = sourceValues[rowIndex]?.[0];
+    const numericValue = parseNumericValue(rawValue);
+
+    if (numericValue !== null) {
+      entry.sum += numericValue;
+      entry.hasNumeric = true;
+    } else if (!entry.hasNumeric && entry.text === null && rawValue !== null && rawValue !== "") {
+      entry.text = String(rawValue);
+    }
+
+    lookup.set(key, entry);
+  }
+
+  const results = new Map<string, Excel.RangeValueType>();
+  lookup.forEach((entry, key) => {
+    if (entry.hasNumeric) {
+      results.set(key, entry.sum);
+    } else if (entry.text !== null) {
+      results.set(key, entry.text);
+    } else {
+      results.set(key, null);
+    }
+  });
+
+  return results;
+}
+
+function parseNumericValue(value: Excel.RangeValueType): number | null {
+  if (typeof value === "number") {
+    return Number.isFinite(value) ? value : null;
+  }
+
+  if (typeof value === "string") {
+    const trimmed = value.trim();
+    if (trimmed.length === 0) {
+      return null;
+    }
+    const parsed = Number(trimmed);
+    return Number.isFinite(parsed) ? parsed : null;
+  }
+
+  return null;
 }
 
 type FsFormattingRule = {
