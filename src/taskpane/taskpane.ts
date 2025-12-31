@@ -50,6 +50,7 @@ let annualTabColorInputEl: HTMLInputElement;
 let annualSectionColorInputEl: HTMLInputElement;
 let simplifyTextButtonEl: HTMLButtonElement;
 let loadLineItemCategoriesButtonEl: HTMLButtonElement;
+let updateFsFormattingButtonEl: HTMLButtonElement;
 let timeHeaderTitleInputEl: HTMLInputElement;
 let timeHeaderFillInputEl: HTMLInputElement;
 let timeHeaderFontColorInputEl: HTMLInputElement;
@@ -88,6 +89,9 @@ Office.onReady((info) => {
   simplifyTextButtonEl = document.getElementById("simplify-text") as HTMLButtonElement;
   loadLineItemCategoriesButtonEl = document.getElementById(
     "load-line-item-categories"
+  ) as HTMLButtonElement;
+  updateFsFormattingButtonEl = document.getElementById(
+    "update-fs-formatting"
   ) as HTMLButtonElement;
 
   timelineColumnsInputEl = document.getElementById("model-timeline-columns") as HTMLInputElement;
@@ -168,6 +172,9 @@ Office.onReady((info) => {
   });
   loadLineItemCategoriesButtonEl.addEventListener("click", () => {
     void handleLoadLineItemCategories();
+  });
+  updateFsFormattingButtonEl.addEventListener("click", () => {
+    void handleUpdateFsFormatting();
   });
   createControlsButtonEl.addEventListener("click", () => {
     void handleCreateControlsSheet();
@@ -407,6 +414,85 @@ async function handleLoadLineItemCategories(): Promise<void> {
     });
 
     setStatus("Loaded line item categories.", "info");
+  } catch (error) {
+    setStatus(getErrorMessage(error), "error");
+  }
+}
+
+async function handleUpdateFsFormatting(): Promise<void> {
+  const timelineColumns = parsePositiveInt(timelineColumnsInputEl.value);
+  if (timelineColumns === null) {
+    setStatus("Columns for timeline must be a whole number of 1 or greater.", "error");
+    return;
+  }
+
+  const totalColumns = DEFAULT_CONSTANTS_COLUMNS + timelineColumns;
+  if (totalColumns > MAX_EXCEL_COLUMNS) {
+    setStatus("Total model columns exceed Excel column limits.", "error");
+    return;
+  }
+
+  const rulesResult = getFsFormattingRules();
+  if (!rulesResult.ok) {
+    setStatus(rulesResult.error, "error");
+    return;
+  }
+
+  setStatus("Updating FS formatting...", "info");
+
+  try {
+    await Excel.run(async (context) => {
+      const range = context.workbook.getSelectedRange();
+      range.load(["rowIndex", "rowCount", "columnIndex", "columnCount"]);
+      const sheet = range.worksheet;
+      await context.sync();
+
+      if (range.columnCount !== 1 || range.columnIndex !== 1) {
+        throw new Error("Select a single-column range in column B.");
+      }
+
+      if (range.rowCount < 1) {
+        throw new Error("Select at least one row in column B.");
+      }
+
+      const categoryRange = sheet.getRangeByIndexes(range.rowIndex, 4, range.rowCount, 1);
+      categoryRange.load("values");
+      await context.sync();
+
+      const rules = rulesResult.rules;
+      const unknownCategories: string[] = [];
+      for (let rowOffset = 0; rowOffset < range.rowCount; rowOffset += 1) {
+        const rawValue = categoryRange.values[rowOffset][0];
+        const category = rawValue === null || rawValue === undefined ? "" : String(rawValue).trim();
+        const rule = rules.get(category);
+        if (!rule) {
+          const label = category.length > 0 ? category : "(blank)";
+          if (!unknownCategories.includes(label)) {
+            unknownCategories.push(label);
+          }
+          continue;
+        }
+
+        const rowIndex = range.rowIndex + rowOffset;
+        applyFsFormattingForRow(sheet, {
+          rowIndex,
+          totalColumns,
+          timelineStartColumn: DEFAULT_CONSTANTS_COLUMNS,
+          timelineColumns,
+          rule,
+        });
+      }
+
+      if (unknownCategories.length > 0) {
+        throw new Error(
+          `Unknown line item categories in column E: ${unknownCategories.join(", ")}.`
+        );
+      }
+
+      await context.sync();
+    });
+
+    setStatus("Updated FS formatting.", "info");
   } catch (error) {
     setStatus(getErrorMessage(error), "error");
   }
@@ -1158,6 +1244,161 @@ function parseNonNegativeNumber(value: string): number | null {
   }
 
   return parsed;
+}
+
+function parseNonNegativeInt(value: string): number | null {
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed) || parsed < 0 || !Number.isInteger(parsed)) {
+    return null;
+  }
+
+  return parsed;
+}
+
+type FsFormattingRule = {
+  bold: boolean;
+  indent: number;
+  fontColor: string;
+  fillColor: string | null;
+  borderLine: FsBorderLine;
+  numberFormat: string;
+};
+
+type FsBorderLine = "none" | "top-single" | "top-double" | "top-double-bottom-double";
+
+type FsFormattingRulesResult =
+  | { ok: true; rules: Map<string, FsFormattingRule> }
+  | { ok: false; error: string };
+
+function getFsFormattingRules(): FsFormattingRulesResult {
+  const ruleEntries: Array<[string, { prefix: string; label: string }]> = [
+    ["Detail", { prefix: "fs-detail", label: "Detail" }],
+    ["SubTotal", { prefix: "fs-subtotal", label: "SubTotal" }],
+    ["Total", { prefix: "fs-total", label: "Total" }],
+    ["GrandTotal", { prefix: "fs-grandtotal", label: "GrandTotal" }],
+    ["SubTotal Header", { prefix: "fs-subtotal-header", label: "SubTotal Header" }],
+    ["Total Header", { prefix: "fs-total-header", label: "Total Header" }],
+    ["GrandTotal Header", { prefix: "fs-grandtotal-header", label: "GrandTotal Header" }],
+  ];
+
+  const rules = new Map<string, FsFormattingRule>();
+  for (const [category, { prefix, label }] of ruleEntries) {
+    const result = getFsFormattingRule(prefix, label);
+    if (!result.ok) {
+      return result;
+    }
+    rules.set(category, result.rule);
+  }
+
+  return { ok: true, rules };
+}
+
+type FsFormattingRuleResult =
+  | { ok: true; rule: FsFormattingRule }
+  | { ok: false; error: string };
+
+function getFsFormattingRule(prefix: string, label: string): FsFormattingRuleResult {
+  const boldValue = (document.getElementById(`${prefix}-bold`) as HTMLSelectElement).value;
+  const bold = boldValue === "true";
+
+  const indentValue = (document.getElementById(`${prefix}-indent`) as HTMLInputElement).value;
+  const indent = parseNonNegativeInt(indentValue);
+  if (indent === null) {
+    return { ok: false, error: `${label} Ident must be a whole number of 0 or greater.` };
+  }
+
+  const fontColor = (document.getElementById(`${prefix}-font-color`) as HTMLInputElement).value.trim();
+  if (!isValidHexColor(fontColor)) {
+    return { ok: false, error: `${label} font color must be a valid hex value (e.g., #000000).` };
+  }
+
+  const fillColorValue = (
+    document.getElementById(`${prefix}-fill-color`) as HTMLInputElement
+  ).value.trim();
+  if (fillColorValue.length > 0 && !isValidHexColor(fillColorValue)) {
+    return { ok: false, error: `${label} fill color must be empty or a valid hex value.` };
+  }
+
+  const borderLine = (document.getElementById(
+    `${prefix}-border-line`
+  ) as HTMLSelectElement).value as FsBorderLine;
+  if (!isValidFsBorderLine(borderLine)) {
+    return { ok: false, error: `${label} border line must be a supported option.` };
+  }
+
+  const numberFormat = (document.getElementById(
+    `${prefix}-number-format`
+  ) as HTMLInputElement).value;
+
+  return {
+    ok: true,
+    rule: {
+      bold,
+      indent,
+      fontColor,
+      fillColor: fillColorValue.length > 0 ? fillColorValue : null,
+      borderLine,
+      numberFormat,
+    },
+  };
+}
+
+function isValidFsBorderLine(value: string): value is FsBorderLine {
+  return (
+    value === "none" ||
+    value === "top-single" ||
+    value === "top-double" ||
+    value === "top-double-bottom-double"
+  );
+}
+
+type FsFormattingRowInput = {
+  rowIndex: number;
+  totalColumns: number;
+  timelineStartColumn: number;
+  timelineColumns: number;
+  rule: FsFormattingRule;
+};
+
+function applyFsFormattingForRow(sheet: Excel.Worksheet, input: FsFormattingRowInput): void {
+  const { rowIndex, totalColumns, timelineStartColumn, timelineColumns, rule } = input;
+  const rowRange = sheet.getRangeByIndexes(rowIndex, 1, 1, totalColumns - 1);
+  rowRange.format.font.bold = rule.bold;
+  rowRange.format.font.color = rule.fontColor;
+
+  if (rule.fillColor) {
+    rowRange.format.fill.color = rule.fillColor;
+  } else {
+    rowRange.format.fill.clear();
+  }
+
+  applyFsBorderLine(rowRange.format.borders, rule.borderLine);
+
+  const indentCell = sheet.getRangeByIndexes(rowIndex, 1, 1, 1);
+  indentCell.format.indentLevel = rule.indent;
+
+  const timelineRange = sheet.getRangeByIndexes(rowIndex, timelineStartColumn, 1, timelineColumns);
+  timelineRange.numberFormat = [Array.from({ length: timelineColumns }, () => rule.numberFormat)];
+}
+
+function applyFsBorderLine(
+  borders: Excel.RangeBorderCollection,
+  borderLine: FsBorderLine
+): void {
+  const topBorder = borders.getItem(Excel.BorderIndex.edgeTop);
+  const bottomBorder = borders.getItem(Excel.BorderIndex.edgeBottom);
+
+  topBorder.style = Excel.BorderLineStyle.none;
+  bottomBorder.style = Excel.BorderLineStyle.none;
+
+  if (borderLine === "top-single") {
+    topBorder.style = Excel.BorderLineStyle.continuous;
+  } else if (borderLine === "top-double") {
+    topBorder.style = Excel.BorderLineStyle.double;
+  } else if (borderLine === "top-double-bottom-double") {
+    topBorder.style = Excel.BorderLineStyle.double;
+    bottomBorder.style = Excel.BorderLineStyle.double;
+  }
 }
 
 type CellAddress = {
