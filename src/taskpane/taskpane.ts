@@ -672,10 +672,13 @@ async function handleMatchLoadData(): Promise<void> {
         sourceValueColumn.values
       );
 
-      const destinationValues = destinationRange.values.map((row) => [...row]);
       const columnKeys = destinationMappingRow.values[0].map(normalizeColumnKey);
       const rowKeys = destinationMappingColumn.values.map((row) => normalizeRowKey(row[0]));
       const updatedRowFlags = new Array(destinationRange.rowCount).fill(false);
+      const rowUpdates: Array<Excel.RangeValueType[] | null> = Array.from(
+        { length: destinationRange.rowCount },
+        () => null
+      );
 
       for (let rowIndex = 0; rowIndex < destinationRange.rowCount; rowIndex += 1) {
         const detailValue = detailRange.values[rowIndex][0];
@@ -696,15 +699,20 @@ async function handleMatchLoadData(): Promise<void> {
             continue;
           }
 
-          destinationValues[rowIndex][colIndex] = sourceLookup.get(matchKey) ?? null;
+          if (!rowUpdates[rowIndex]) {
+            rowUpdates[rowIndex] = [...destinationRange.values[rowIndex]];
+          }
+          rowUpdates[rowIndex]![colIndex] = sourceLookup.get(matchKey) ?? null;
           updatedRowFlags[rowIndex] = true;
         }
       }
 
-      destinationRange.values = destinationValues;
-
       updatedRowFlags.forEach((updated, rowOffset) => {
         if (!updated) {
+          return;
+        }
+        const rowValues = rowUpdates[rowOffset];
+        if (!rowValues) {
           return;
         }
         const rowRange = destinationSheet.getRangeByIndexes(
@@ -713,6 +721,7 @@ async function handleMatchLoadData(): Promise<void> {
           1,
           destinationRange.columnCount
         );
+        rowRange.values = [rowValues];
         rowRange.format.font.color = "#3333FF";
       });
 
