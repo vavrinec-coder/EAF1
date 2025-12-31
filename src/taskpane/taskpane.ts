@@ -673,13 +673,13 @@ async function handleMatchLoadData(): Promise<void> {
       );
 
       const destinationValues = destinationRange.values.map((row) => [...row]);
-      const columnKeys = destinationMappingRow.values[0].map(normalizeKey);
-      const rowKeys = destinationMappingColumn.values.map((row) => normalizeKey(row[0]));
+      const columnKeys = destinationMappingRow.values[0].map(normalizeColumnKey);
+      const rowKeys = destinationMappingColumn.values.map((row) => normalizeRowKey(row[0]));
       const updatedRowFlags = new Array(destinationRange.rowCount).fill(false);
 
       for (let rowIndex = 0; rowIndex < destinationRange.rowCount; rowIndex += 1) {
         const detailValue = detailRange.values[rowIndex][0];
-        const isDetail = normalizeKey(detailValue).toLowerCase() === "detail";
+        const isDetail = normalizeTextKey(detailValue) === "detail";
         if (!isDetail) {
           continue;
         }
@@ -1544,12 +1544,72 @@ function parseSheetAddress(value: string): ParsedSheetAddress {
   return { sheetName, address };
 }
 
-function normalizeKey(value: Excel.RangeValueType): string {
+function normalizeRowKey(value: Excel.RangeValueType): string {
+  return normalizeTextKey(value);
+}
+
+function normalizeColumnKey(value: Excel.RangeValueType): string {
+  const dateKey = normalizeDateKey(value);
+  if (dateKey) {
+    return dateKey;
+  }
+
+  return normalizeTextKey(value);
+}
+
+function normalizeTextKey(value: Excel.RangeValueType): string {
   if (value === null || value === undefined) {
     return "";
   }
 
-  return String(value).trim();
+  return String(value).replace(/\s+/g, " ").trim().toLowerCase();
+}
+
+function normalizeDateKey(value: Excel.RangeValueType): string | null {
+  if (value instanceof Date) {
+    return dateToKey(value);
+  }
+
+  if (typeof value === "number" && Number.isFinite(value)) {
+    return dateToKey(excelSerialToDate(value));
+  }
+
+  if (typeof value === "string") {
+    const trimmed = value.trim();
+    if (trimmed.length === 0) {
+      return null;
+    }
+
+    if (/^[+-]?\d+(\.\d+)?$/.test(trimmed)) {
+      const numericValue = Number(trimmed);
+      if (Number.isFinite(numericValue)) {
+        return dateToKey(excelSerialToDate(numericValue));
+      }
+    }
+
+    if (!/\d/.test(trimmed)) {
+      return null;
+    }
+
+    const parsed = Date.parse(trimmed);
+    if (!Number.isNaN(parsed)) {
+      return dateToKey(new Date(parsed));
+    }
+  }
+
+  return null;
+}
+
+function dateToKey(date: Date): string {
+  const year = date.getFullYear();
+  const month = `${date.getMonth() + 1}`.padStart(2, "0");
+  const day = `${date.getDate()}`.padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function excelSerialToDate(serial: number): Date {
+  const excelEpoch = new Date(1899, 11, 30);
+  return new Date(excelEpoch.getTime() + serial * 86400000);
 }
 
 type SourceLookupEntry = {
@@ -1570,8 +1630,8 @@ function buildSourceLookup(
   const lookup = new Map<string, SourceLookupEntry>();
 
   for (let rowIndex = 0; rowIndex < sourceValues.length; rowIndex += 1) {
-    const columnKey = normalizeKey(sourceColumns[rowIndex]?.[0]);
-    const rowKey = normalizeKey(sourceRows[rowIndex]?.[0]);
+    const rowKey = normalizeRowKey(sourceColumns[rowIndex]?.[0]);
+    const columnKey = normalizeColumnKey(sourceRows[rowIndex]?.[0]);
     if (!columnKey && !rowKey) {
       continue;
     }
