@@ -1504,12 +1504,44 @@ function getRangeFromInput(
     throw new Error(`${label} is required.`);
   }
 
-  const address = value.startsWith("=") ? value.slice(1).trim() : value;
-  if (!address) {
+  const addressValue = value.startsWith("=") ? value.slice(1).trim() : value;
+  if (!addressValue) {
     throw new Error(`${label} is required.`);
   }
 
-  return context.workbook.getRange(address);
+  const parsed = parseSheetAddress(addressValue);
+  const worksheet = parsed.sheetName
+    ? context.workbook.worksheets.getItem(parsed.sheetName)
+    : context.workbook.getActiveWorksheet();
+  return worksheet.getRange(parsed.address);
+}
+
+type ParsedSheetAddress = {
+  sheetName: string | null;
+  address: string;
+};
+
+function parseSheetAddress(value: string): ParsedSheetAddress {
+  if (!value.includes("!")) {
+    return { sheetName: null, address: value };
+  }
+
+  const quotedMatch = /^'(.+)'!(.+)$/.exec(value);
+  if (quotedMatch) {
+    return {
+      sheetName: quotedMatch[1].replace(/''/g, "'"),
+      address: quotedMatch[2],
+    };
+  }
+
+  const parts = value.split("!");
+  if (parts.length < 2) {
+    return { sheetName: null, address: value };
+  }
+
+  const sheetName = parts[0];
+  const address = parts.slice(1).join("!");
+  return { sheetName, address };
 }
 
 function normalizeKey(value: Excel.RangeValueType): string {
