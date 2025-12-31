@@ -52,6 +52,11 @@ let simplifyTextButtonEl: HTMLButtonElement;
 let loadLineItemCategoriesButtonEl: HTMLButtonElement;
 let updateFsFormattingButtonEl: HTMLButtonElement;
 let destinationRangeInputEl: HTMLInputElement;
+let destinationMappingColumnInputEl: HTMLInputElement;
+let destinationMappingRowInputEl: HTMLInputElement;
+let sourceRangeInputEl: HTMLInputElement;
+let sourceMappingColumnInputEl: HTMLInputElement;
+let sourceMappingColumnRowInputEl: HTMLInputElement;
 let timeHeaderTitleInputEl: HTMLInputElement;
 let timeHeaderFillInputEl: HTMLInputElement;
 let timeHeaderFontColorInputEl: HTMLInputElement;
@@ -66,7 +71,7 @@ let flagsHeaderFillInputEl: HTMLInputElement;
 let flagsHeaderFontColorInputEl: HTMLInputElement;
 
 let timelineLengthDirty = false;
-let destinationRangeArmed = false;
+let activeRangeInputEl: HTMLInputElement | null = null;
 
 Office.onReady((info) => {
   if (info.host !== Office.HostType.Excel) {
@@ -97,6 +102,21 @@ Office.onReady((info) => {
   ) as HTMLButtonElement;
   destinationRangeInputEl = document.getElementById(
     "match-destination-range"
+  ) as HTMLInputElement;
+  destinationMappingColumnInputEl = document.getElementById(
+    "match-destination-mapping-column"
+  ) as HTMLInputElement;
+  destinationMappingRowInputEl = document.getElementById(
+    "match-destination-mapping-row"
+  ) as HTMLInputElement;
+  sourceRangeInputEl = document.getElementById(
+    "match-source-range"
+  ) as HTMLInputElement;
+  sourceMappingColumnInputEl = document.getElementById(
+    "match-source-mapping-column"
+  ) as HTMLInputElement;
+  sourceMappingColumnRowInputEl = document.getElementById(
+    "match-source-mapping-column-row"
   ) as HTMLInputElement;
 
   timelineColumnsInputEl = document.getElementById("model-timeline-columns") as HTMLInputElement;
@@ -181,8 +201,17 @@ Office.onReady((info) => {
   updateFsFormattingButtonEl.addEventListener("click", () => {
     void handleUpdateFsFormatting();
   });
-  destinationRangeInputEl.addEventListener("input", () => {
-    destinationRangeArmed = destinationRangeInputEl.value.trim() === "=";
+  [
+    destinationRangeInputEl,
+    destinationMappingColumnInputEl,
+    destinationMappingRowInputEl,
+    sourceRangeInputEl,
+    sourceMappingColumnInputEl,
+    sourceMappingColumnRowInputEl,
+  ].forEach((inputEl) => {
+    inputEl.addEventListener("input", () => {
+      armRangeCapture(inputEl);
+    });
   });
   createControlsButtonEl.addEventListener("click", () => {
     void handleCreateControlsSheet();
@@ -208,10 +237,10 @@ Office.onReady((info) => {
   Office.context.document.addHandlerAsync(
     Office.EventType.DocumentSelectionChanged,
     () => {
-      if (!destinationRangeArmed) {
+      if (!activeRangeInputEl) {
         return;
       }
-      void updateDestinationRangeFromSelection();
+      void updateRangeInputFromSelection();
     }
   );
 
@@ -515,15 +544,17 @@ async function handleUpdateFsFormatting(): Promise<void> {
   }
 }
 
-async function updateDestinationRangeFromSelection(): Promise<void> {
+async function updateRangeInputFromSelection(): Promise<void> {
   try {
     await Excel.run(async (context) => {
       const range = context.workbook.getSelectedRange();
       range.load("address");
       await context.sync();
 
-      destinationRangeInputEl.value = `=${range.address}`;
-      destinationRangeArmed = false;
+      if (activeRangeInputEl) {
+        activeRangeInputEl.value = `=${range.address}`;
+        activeRangeInputEl = null;
+      }
     });
   } catch (error) {
     setStatus(getErrorMessage(error), "error");
@@ -1285,6 +1316,18 @@ function parseNonNegativeInt(value: string): number | null {
   }
 
   return parsed;
+}
+
+function armRangeCapture(inputEl: HTMLInputElement): void {
+  const value = inputEl.value.trim();
+  if (value === "=") {
+    activeRangeInputEl = inputEl;
+    return;
+  }
+
+  if (activeRangeInputEl === inputEl) {
+    activeRangeInputEl = null;
+  }
 }
 
 type FsFormattingRule = {
