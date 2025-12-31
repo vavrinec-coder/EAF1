@@ -57,6 +57,7 @@ let destinationMappingRowInputEl: HTMLInputElement;
 let sourceRangeInputEl: HTMLInputElement;
 let sourceMappingColumnInputEl: HTMLInputElement;
 let sourceMappingColumnRowInputEl: HTMLInputElement;
+let sourceValueColumnInputEl: HTMLInputElement;
 let timeHeaderTitleInputEl: HTMLInputElement;
 let timeHeaderFillInputEl: HTMLInputElement;
 let timeHeaderFontColorInputEl: HTMLInputElement;
@@ -117,6 +118,9 @@ Office.onReady((info) => {
   ) as HTMLInputElement;
   sourceMappingColumnRowInputEl = document.getElementById(
     "match-source-mapping-column-row"
+  ) as HTMLInputElement;
+  sourceValueColumnInputEl = document.getElementById(
+    "match-source-value-column"
   ) as HTMLInputElement;
 
   timelineColumnsInputEl = document.getElementById("model-timeline-columns") as HTMLInputElement;
@@ -208,6 +212,7 @@ Office.onReady((info) => {
     sourceRangeInputEl,
     sourceMappingColumnInputEl,
     sourceMappingColumnRowInputEl,
+    sourceValueColumnInputEl,
   ].forEach((inputEl) => {
     inputEl.addEventListener("input", () => {
       armRangeCapture(inputEl);
