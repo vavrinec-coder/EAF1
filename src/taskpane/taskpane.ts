@@ -1362,23 +1362,36 @@ type FsFormattingRowInput = {
 
 function applyFsFormattingForRow(sheet: Excel.Worksheet, input: FsFormattingRowInput): void {
   const { rowIndex, totalColumns, timelineStartColumn, timelineColumns, rule } = input;
-  const rowRange = sheet.getRangeByIndexes(rowIndex, 1, 1, totalColumns - 1);
-  rowRange.format.font.bold = rule.bold;
-  rowRange.format.font.color = rule.fontColor;
-
-  if (rule.fillColor) {
-    rowRange.format.fill.color = rule.fillColor;
-  } else {
-    rowRange.format.fill.clear();
+  const beforeCategoryWidth = Math.min(3, totalColumns - 1);
+  if (beforeCategoryWidth > 0) {
+    const beforeCategoryRange = sheet.getRangeByIndexes(rowIndex, 1, 1, beforeCategoryWidth);
+    applyFsFormattingToRange(beforeCategoryRange, rule);
   }
 
-  applyFsBorderLine(rowRange.format.borders, rule.borderLine);
+  const afterCategoryWidth = totalColumns - 5;
+  if (afterCategoryWidth > 0) {
+    const afterCategoryRange = sheet.getRangeByIndexes(rowIndex, 5, 1, afterCategoryWidth);
+    applyFsFormattingToRange(afterCategoryRange, rule);
+  }
 
   const indentCell = sheet.getRangeByIndexes(rowIndex, 1, 1, 1);
   indentCell.format.indentLevel = rule.indent;
 
   const timelineRange = sheet.getRangeByIndexes(rowIndex, timelineStartColumn, 1, timelineColumns);
   timelineRange.numberFormat = [Array.from({ length: timelineColumns }, () => rule.numberFormat)];
+}
+
+function applyFsFormattingToRange(range: Excel.Range, rule: FsFormattingRule): void {
+  range.format.font.bold = rule.bold;
+  range.format.font.color = rule.fontColor;
+
+  if (rule.fillColor) {
+    range.format.fill.color = rule.fillColor;
+  } else {
+    range.format.fill.clear();
+  }
+
+  applyFsBorderLine(range.format.borders, rule.borderLine);
 }
 
 function applyFsBorderLine(
