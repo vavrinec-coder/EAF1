@@ -8,7 +8,8 @@ import { createAnnualSheet, AnnualSheetSpec } from "../templateBuilder/annualShe
 
 const MAX_EXCEL_ROWS = 1048576;
 const MAX_EXCEL_COLUMNS = 16384;
-const DEFAULT_CONSTANTS_COLUMNS = 10;
+const BASE_CONSTANTS_COLUMNS = 4;
+const MIN_ADDITIONAL_COLUMNS = 6;
 const DEFAULT_TIME_HEADER_START_CELL = "A7";
 const DEFAULT_TIME_HEADER_ROWS = 1;
 const DEFAULT_CONSTANTS_START_ROW = 9;
@@ -28,12 +29,10 @@ let widthColAInputEl: HTMLInputElement;
 let widthColBInputEl: HTMLInputElement;
 let widthColCInputEl: HTMLInputElement;
 let widthColDInputEl: HTMLInputElement;
-let widthColEInputEl: HTMLInputElement;
-let widthColFInputEl: HTMLInputElement;
-let widthColGInputEl: HTMLInputElement;
-let widthColHInputEl: HTMLInputElement;
-let widthColIInputEl: HTMLInputElement;
-let widthColJInputEl: HTMLInputElement;
+let additionalColumnsInputEl: HTMLInputElement;
+let otherAdditionalColumnsWidthInputEl: HTMLInputElement;
+let nextToLastColumnWidthInputEl: HTMLInputElement;
+let lastColumnWidthInputEl: HTMLInputElement;
 let createControlsButtonEl: HTMLButtonElement;
 let controlsTabColorInputEl: HTMLInputElement;
 let createMonthlyButtonEl: HTMLButtonElement;
@@ -135,12 +134,16 @@ Office.onReady((info) => {
   widthColBInputEl = document.getElementById("width-col-b") as HTMLInputElement;
   widthColCInputEl = document.getElementById("width-col-c") as HTMLInputElement;
   widthColDInputEl = document.getElementById("width-col-d") as HTMLInputElement;
-  widthColEInputEl = document.getElementById("width-col-e") as HTMLInputElement;
-  widthColFInputEl = document.getElementById("width-col-f") as HTMLInputElement;
-  widthColGInputEl = document.getElementById("width-col-g") as HTMLInputElement;
-  widthColHInputEl = document.getElementById("width-col-h") as HTMLInputElement;
-  widthColIInputEl = document.getElementById("width-col-i") as HTMLInputElement;
-  widthColJInputEl = document.getElementById("width-col-j") as HTMLInputElement;
+  additionalColumnsInputEl = document.getElementById(
+    "model-additional-columns"
+  ) as HTMLInputElement;
+  otherAdditionalColumnsWidthInputEl = document.getElementById(
+    "width-additional-other"
+  ) as HTMLInputElement;
+  nextToLastColumnWidthInputEl = document.getElementById(
+    "width-next-to-last"
+  ) as HTMLInputElement;
+  lastColumnWidthInputEl = document.getElementById("width-last") as HTMLInputElement;
   createControlsButtonEl = document.getElementById("create-controls-sheet") as HTMLButtonElement;
   controlsTabColorInputEl = document.getElementById(
     "controls-tab-color"
@@ -482,7 +485,14 @@ async function handleUpdateFsFormatting(): Promise<void> {
     return;
   }
 
-  const totalColumns = DEFAULT_CONSTANTS_COLUMNS + timelineColumns;
+  const additionalColumnsResult = getAdditionalColumnsFromForm();
+  if (!additionalColumnsResult.ok) {
+    setStatus(additionalColumnsResult.error, "error");
+    return;
+  }
+
+  const constantsColumns = BASE_CONSTANTS_COLUMNS + additionalColumnsResult.additionalColumns;
+  const totalColumns = constantsColumns + timelineColumns;
   if (totalColumns > MAX_EXCEL_COLUMNS) {
     setStatus("Total model columns exceed Excel column limits.", "error");
     return;
@@ -533,7 +543,7 @@ async function handleUpdateFsFormatting(): Promise<void> {
         applyFsFormattingForRow(sheet, {
           rowIndex,
           totalColumns,
-          timelineStartColumn: DEFAULT_CONSTANTS_COLUMNS,
+          timelineStartColumn: constantsColumns,
           timelineColumns,
           rule,
         });
@@ -824,7 +834,12 @@ type ControlsSheetFormResult =
   | { ok: false; error: string };
 
 function getControlsSheetSpecFromForm(): ControlsSheetFormResult {
-  const constantsColumns = DEFAULT_CONSTANTS_COLUMNS;
+  const additionalColumnsResult = getAdditionalColumnsFromForm();
+  if (!additionalColumnsResult.ok) {
+    return { ok: false, error: additionalColumnsResult.error };
+  }
+
+  const constantsColumns = BASE_CONSTANTS_COLUMNS + additionalColumnsResult.additionalColumns;
 
   const timelineColumns = parsePositiveInt(timelineColumnsInputEl.value);
   if (timelineColumns === null) {
@@ -940,26 +955,14 @@ function getControlsSheetSpecFromForm(): ControlsSheetFormResult {
   const widthB = parseNonNegativeNumber(widthColBInputEl.value);
   const widthC = parseNonNegativeNumber(widthColCInputEl.value);
   const widthD = parseNonNegativeNumber(widthColDInputEl.value);
-  const widthE = parseNonNegativeNumber(widthColEInputEl.value);
-  const widthF = parseNonNegativeNumber(widthColFInputEl.value);
-  const widthG = parseNonNegativeNumber(widthColGInputEl.value);
-  const widthH = parseNonNegativeNumber(widthColHInputEl.value);
-  const widthI = parseNonNegativeNumber(widthColIInputEl.value);
-  const widthJ = parseNonNegativeNumber(widthColJInputEl.value);
 
-  if (
-    widthA === null ||
-    widthB === null ||
-    widthC === null ||
-    widthD === null ||
-    widthE === null ||
-    widthF === null ||
-    widthG === null ||
-    widthH === null ||
-    widthI === null ||
-    widthJ === null
-  ) {
+  if (widthA === null || widthB === null || widthC === null || widthD === null) {
     return { ok: false, error: "Column widths must be numbers of 0 or greater." };
+  }
+
+  const additionalWidthsResult = getAdditionalColumnWidthsFromForm();
+  if (!additionalWidthsResult.ok) {
+    return { ok: false, error: additionalWidthsResult.error };
   }
 
   const tabColor = controlsTabColorInputEl.value.trim();
@@ -985,12 +988,9 @@ function getControlsSheetSpecFromForm(): ControlsSheetFormResult {
         B: widthB,
         C: widthC,
         D: widthD,
-        E: widthE,
-        F: widthF,
-        G: widthG,
-        H: widthH,
-        I: widthI,
-        J: widthJ,
+        otherAdditionalColumnsWidth: additionalWidthsResult.widths.otherAdditionalColumnsWidth,
+        nextToLastColumnWidth: additionalWidthsResult.widths.nextToLastColumnWidth,
+        lastColumnWidth: additionalWidthsResult.widths.lastColumnWidth,
       },
       timeHeader: {
         startCell: timeHeaderStartCell,
@@ -1026,7 +1026,12 @@ type MonthlySheetFormResult =
   | { ok: false; error: string };
 
 function getMonthlySheetSpecFromForm(): MonthlySheetFormResult {
-  const constantsColumns = DEFAULT_CONSTANTS_COLUMNS;
+  const additionalColumnsResult = getAdditionalColumnsFromForm();
+  if (!additionalColumnsResult.ok) {
+    return { ok: false, error: additionalColumnsResult.error };
+  }
+
+  const constantsColumns = BASE_CONSTANTS_COLUMNS + additionalColumnsResult.additionalColumns;
 
   const timelineColumns = parsePositiveInt(timelineColumnsInputEl.value);
   if (timelineColumns === null) {
@@ -1067,26 +1072,14 @@ function getMonthlySheetSpecFromForm(): MonthlySheetFormResult {
   const widthB = parseNonNegativeNumber(widthColBInputEl.value);
   const widthC = parseNonNegativeNumber(widthColCInputEl.value);
   const widthD = parseNonNegativeNumber(widthColDInputEl.value);
-  const widthE = parseNonNegativeNumber(widthColEInputEl.value);
-  const widthF = parseNonNegativeNumber(widthColFInputEl.value);
-  const widthG = parseNonNegativeNumber(widthColGInputEl.value);
-  const widthH = parseNonNegativeNumber(widthColHInputEl.value);
-  const widthI = parseNonNegativeNumber(widthColIInputEl.value);
-  const widthJ = parseNonNegativeNumber(widthColJInputEl.value);
 
-  if (
-    widthA === null ||
-    widthB === null ||
-    widthC === null ||
-    widthD === null ||
-    widthE === null ||
-    widthF === null ||
-    widthG === null ||
-    widthH === null ||
-    widthI === null ||
-    widthJ === null
-  ) {
+  if (widthA === null || widthB === null || widthC === null || widthD === null) {
     return { ok: false, error: "Column widths must be numbers of 0 or greater." };
+  }
+
+  const additionalWidthsResult = getAdditionalColumnWidthsFromForm();
+  if (!additionalWidthsResult.ok) {
+    return { ok: false, error: additionalWidthsResult.error };
   }
 
   const tabColor = monthlyTabColorInputEl.value.trim();
@@ -1118,12 +1111,9 @@ function getMonthlySheetSpecFromForm(): MonthlySheetFormResult {
         B: widthB,
         C: widthC,
         D: widthD,
-        E: widthE,
-        F: widthF,
-        G: widthG,
-        H: widthH,
-        I: widthI,
-        J: widthJ,
+        otherAdditionalColumnsWidth: additionalWidthsResult.widths.otherAdditionalColumnsWidth,
+        nextToLastColumnWidth: additionalWidthsResult.widths.nextToLastColumnWidth,
+        lastColumnWidth: additionalWidthsResult.widths.lastColumnWidth,
       },
     },
   };
@@ -1134,7 +1124,12 @@ type FsMonthlySheetFormResult =
   | { ok: false; error: string };
 
 function getFsMonthlySheetSpecFromForm(): FsMonthlySheetFormResult {
-  const constantsColumns = DEFAULT_CONSTANTS_COLUMNS;
+  const additionalColumnsResult = getAdditionalColumnsFromForm();
+  if (!additionalColumnsResult.ok) {
+    return { ok: false, error: additionalColumnsResult.error };
+  }
+
+  const constantsColumns = BASE_CONSTANTS_COLUMNS + additionalColumnsResult.additionalColumns;
 
   const timelineColumns = parsePositiveInt(timelineColumnsInputEl.value);
   if (timelineColumns === null) {
@@ -1175,26 +1170,14 @@ function getFsMonthlySheetSpecFromForm(): FsMonthlySheetFormResult {
   const widthB = parseNonNegativeNumber(widthColBInputEl.value);
   const widthC = parseNonNegativeNumber(widthColCInputEl.value);
   const widthD = parseNonNegativeNumber(widthColDInputEl.value);
-  const widthE = parseNonNegativeNumber(widthColEInputEl.value);
-  const widthF = parseNonNegativeNumber(widthColFInputEl.value);
-  const widthG = parseNonNegativeNumber(widthColGInputEl.value);
-  const widthH = parseNonNegativeNumber(widthColHInputEl.value);
-  const widthI = parseNonNegativeNumber(widthColIInputEl.value);
-  const widthJ = parseNonNegativeNumber(widthColJInputEl.value);
 
-  if (
-    widthA === null ||
-    widthB === null ||
-    widthC === null ||
-    widthD === null ||
-    widthE === null ||
-    widthF === null ||
-    widthG === null ||
-    widthH === null ||
-    widthI === null ||
-    widthJ === null
-  ) {
+  if (widthA === null || widthB === null || widthC === null || widthD === null) {
     return { ok: false, error: "Column widths must be numbers of 0 or greater." };
+  }
+
+  const additionalWidthsResult = getAdditionalColumnWidthsFromForm();
+  if (!additionalWidthsResult.ok) {
+    return { ok: false, error: additionalWidthsResult.error };
   }
 
   const tabColor = fsMonthlyTabColorInputEl.value.trim();
@@ -1226,12 +1209,9 @@ function getFsMonthlySheetSpecFromForm(): FsMonthlySheetFormResult {
         B: widthB,
         C: widthC,
         D: widthD,
-        E: widthE,
-        F: widthF,
-        G: widthG,
-        H: widthH,
-        I: widthI,
-        J: widthJ,
+        otherAdditionalColumnsWidth: additionalWidthsResult.widths.otherAdditionalColumnsWidth,
+        nextToLastColumnWidth: additionalWidthsResult.widths.nextToLastColumnWidth,
+        lastColumnWidth: additionalWidthsResult.widths.lastColumnWidth,
       },
     },
   };
@@ -1242,7 +1222,12 @@ type QuarterlySheetFormResult =
   | { ok: false; error: string };
 
 function getQuarterlySheetSpecFromForm(): QuarterlySheetFormResult {
-  const constantsColumns = DEFAULT_CONSTANTS_COLUMNS;
+  const additionalColumnsResult = getAdditionalColumnsFromForm();
+  if (!additionalColumnsResult.ok) {
+    return { ok: false, error: additionalColumnsResult.error };
+  }
+
+  const constantsColumns = BASE_CONSTANTS_COLUMNS + additionalColumnsResult.additionalColumns;
 
   const modelTimelineColumns = parsePositiveInt(timelineColumnsInputEl.value);
   if (modelTimelineColumns === null) {
@@ -1284,26 +1269,14 @@ function getQuarterlySheetSpecFromForm(): QuarterlySheetFormResult {
   const widthB = parseNonNegativeNumber(widthColBInputEl.value);
   const widthC = parseNonNegativeNumber(widthColCInputEl.value);
   const widthD = parseNonNegativeNumber(widthColDInputEl.value);
-  const widthE = parseNonNegativeNumber(widthColEInputEl.value);
-  const widthF = parseNonNegativeNumber(widthColFInputEl.value);
-  const widthG = parseNonNegativeNumber(widthColGInputEl.value);
-  const widthH = parseNonNegativeNumber(widthColHInputEl.value);
-  const widthI = parseNonNegativeNumber(widthColIInputEl.value);
-  const widthJ = parseNonNegativeNumber(widthColJInputEl.value);
 
-  if (
-    widthA === null ||
-    widthB === null ||
-    widthC === null ||
-    widthD === null ||
-    widthE === null ||
-    widthF === null ||
-    widthG === null ||
-    widthH === null ||
-    widthI === null ||
-    widthJ === null
-  ) {
+  if (widthA === null || widthB === null || widthC === null || widthD === null) {
     return { ok: false, error: "Column widths must be numbers of 0 or greater." };
+  }
+
+  const additionalWidthsResult = getAdditionalColumnWidthsFromForm();
+  if (!additionalWidthsResult.ok) {
+    return { ok: false, error: additionalWidthsResult.error };
   }
 
   const tabColor = quarterlyTabColorInputEl.value.trim();
@@ -1335,12 +1308,9 @@ function getQuarterlySheetSpecFromForm(): QuarterlySheetFormResult {
         B: widthB,
         C: widthC,
         D: widthD,
-        E: widthE,
-        F: widthF,
-        G: widthG,
-        H: widthH,
-        I: widthI,
-        J: widthJ,
+        otherAdditionalColumnsWidth: additionalWidthsResult.widths.otherAdditionalColumnsWidth,
+        nextToLastColumnWidth: additionalWidthsResult.widths.nextToLastColumnWidth,
+        lastColumnWidth: additionalWidthsResult.widths.lastColumnWidth,
       },
     },
   };
@@ -1351,7 +1321,12 @@ type AnnualSheetFormResult =
   | { ok: false; error: string };
 
 function getAnnualSheetSpecFromForm(): AnnualSheetFormResult {
-  const constantsColumns = DEFAULT_CONSTANTS_COLUMNS;
+  const additionalColumnsResult = getAdditionalColumnsFromForm();
+  if (!additionalColumnsResult.ok) {
+    return { ok: false, error: additionalColumnsResult.error };
+  }
+
+  const constantsColumns = BASE_CONSTANTS_COLUMNS + additionalColumnsResult.additionalColumns;
 
   const modelTimelineColumns = parsePositiveInt(timelineColumnsInputEl.value);
   if (modelTimelineColumns === null) {
@@ -1393,26 +1368,14 @@ function getAnnualSheetSpecFromForm(): AnnualSheetFormResult {
   const widthB = parseNonNegativeNumber(widthColBInputEl.value);
   const widthC = parseNonNegativeNumber(widthColCInputEl.value);
   const widthD = parseNonNegativeNumber(widthColDInputEl.value);
-  const widthE = parseNonNegativeNumber(widthColEInputEl.value);
-  const widthF = parseNonNegativeNumber(widthColFInputEl.value);
-  const widthG = parseNonNegativeNumber(widthColGInputEl.value);
-  const widthH = parseNonNegativeNumber(widthColHInputEl.value);
-  const widthI = parseNonNegativeNumber(widthColIInputEl.value);
-  const widthJ = parseNonNegativeNumber(widthColJInputEl.value);
 
-  if (
-    widthA === null ||
-    widthB === null ||
-    widthC === null ||
-    widthD === null ||
-    widthE === null ||
-    widthF === null ||
-    widthG === null ||
-    widthH === null ||
-    widthI === null ||
-    widthJ === null
-  ) {
+  if (widthA === null || widthB === null || widthC === null || widthD === null) {
     return { ok: false, error: "Column widths must be numbers of 0 or greater." };
+  }
+
+  const additionalWidthsResult = getAdditionalColumnWidthsFromForm();
+  if (!additionalWidthsResult.ok) {
+    return { ok: false, error: additionalWidthsResult.error };
   }
 
   const tabColor = annualTabColorInputEl.value.trim();
@@ -1444,12 +1407,9 @@ function getAnnualSheetSpecFromForm(): AnnualSheetFormResult {
         B: widthB,
         C: widthC,
         D: widthD,
-        E: widthE,
-        F: widthF,
-        G: widthG,
-        H: widthH,
-        I: widthI,
-        J: widthJ,
+        otherAdditionalColumnsWidth: additionalWidthsResult.widths.otherAdditionalColumnsWidth,
+        nextToLastColumnWidth: additionalWidthsResult.widths.nextToLastColumnWidth,
+        lastColumnWidth: additionalWidthsResult.widths.lastColumnWidth,
       },
     },
   };
@@ -1489,6 +1449,66 @@ function parseNonNegativeInt(value: string): number | null {
   }
 
   return parsed;
+}
+
+type AdditionalColumnWidths = {
+  otherAdditionalColumnsWidth: number;
+  nextToLastColumnWidth: number;
+  lastColumnWidth: number;
+};
+
+type AdditionalColumnsResult =
+  | { ok: true; additionalColumns: number }
+  | { ok: false; error: string };
+
+type AdditionalColumnWidthsResult =
+  | { ok: true; widths: AdditionalColumnWidths }
+  | { ok: false; error: string };
+
+function getAdditionalColumnsFromForm(): AdditionalColumnsResult {
+  const additionalColumns = parseNonNegativeInt(additionalColumnsInputEl.value);
+  if (additionalColumns === null) {
+    return {
+      ok: false,
+      error: `No of additional columns must be a whole number of ${MIN_ADDITIONAL_COLUMNS} or greater.`,
+    };
+  }
+
+  if (additionalColumns < MIN_ADDITIONAL_COLUMNS) {
+    return {
+      ok: false,
+      error: `No of additional columns must be ${MIN_ADDITIONAL_COLUMNS} or greater.`,
+    };
+  }
+
+  return { ok: true, additionalColumns };
+}
+
+function getAdditionalColumnWidthsFromForm(): AdditionalColumnWidthsResult {
+  const otherAdditionalColumnsWidth = parseNonNegativeNumber(
+    otherAdditionalColumnsWidthInputEl.value
+  );
+  const nextToLastColumnWidth = parseNonNegativeNumber(
+    nextToLastColumnWidthInputEl.value
+  );
+  const lastColumnWidth = parseNonNegativeNumber(lastColumnWidthInputEl.value);
+
+  if (
+    otherAdditionalColumnsWidth === null ||
+    nextToLastColumnWidth === null ||
+    lastColumnWidth === null
+  ) {
+    return { ok: false, error: "Additional column widths must be numbers of 0 or greater." };
+  }
+
+  return {
+    ok: true,
+    widths: {
+      otherAdditionalColumnsWidth,
+      nextToLastColumnWidth,
+      lastColumnWidth,
+    },
+  };
 }
 
 function armRangeCapture(inputEl: HTMLInputElement): void {
@@ -1913,7 +1933,6 @@ function syncDerivedDefaults(force = false): void {
     return;
   }
 
-  const totalColumns = DEFAULT_CONSTANTS_COLUMNS + timelineColumns;
   if (force || !timelineLengthDirty) {
     constantsTimelineLengthInputEl.value = timelineColumns.toString();
     timelineLengthDirty = false;

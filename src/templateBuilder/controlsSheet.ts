@@ -16,12 +16,9 @@ export type ControlsSheetSpec = {
     B: number;
     C: number;
     D: number;
-    E: number;
-    F: number;
-    G: number;
-    H: number;
-    I: number;
-    J: number;
+    otherAdditionalColumnsWidth: number;
+    nextToLastColumnWidth: number;
+    lastColumnWidth: number;
   };
   timeHeader: {
     startCell: string;
@@ -54,6 +51,7 @@ const DEFAULT_SHEET_RANGE = "A1:ZZ200";
 const COLUMN_HIDE_LIMIT = 200;
 const DATE_NUMBER_FORMAT = "[$-en-US]d/mmm/yy;@";
 const DEFAULT_TIMELINE_COLUMN_WIDTH = 12;
+const BASE_CONSTANTS_COLUMNS = 4;
 const MAX_EXCEL_COLUMNS = 16384;
 const MAX_EXCEL_ROWS = 1048576;
 
@@ -76,6 +74,8 @@ export async function createControlsSheet(spec: ControlsSheetSpec): Promise<void
     }
 
     const totalModelColumns = spec.constantsColumns + spec.timelineColumns;
+    const unitColumnIndex = Math.max(0, spec.constantsColumns - 2);
+    const unitColumnLetter = columnIndexToLetters(unitColumnIndex);
     sheet.tabColor = spec.tabColor;
     sheet.showGridlines = false;
 
@@ -84,7 +84,7 @@ export async function createControlsSheet(spec: ControlsSheetSpec): Promise<void
     baseRange.format.font.size = spec.font.size;
     baseRange.format.font.color = spec.font.color;
 
-    applyColumnWidths(sheet, spec.columnWidths);
+    applyColumnWidths(sheet, spec.columnWidths, spec.constantsColumns);
     applyTimelineColumnWidths(sheet, spec.constantsColumns, spec.timelineColumns);
 
     const visibleColumnCount = Math.min(totalModelColumns, COLUMN_HIDE_LIMIT);
@@ -153,7 +153,7 @@ export async function createControlsSheet(spec: ControlsSheetSpec): Promise<void
     ];
     labelRange.format.horizontalAlignment = Excel.HorizontalAlignment.left;
 
-    const unitRange = sheet.getRangeByIndexes(constantsStartRow - 1, 8, 9, 1);
+    const unitRange = sheet.getRangeByIndexes(constantsStartRow - 1, unitColumnIndex, 9, 1);
     unitRange.values = [
       ["Date"],
       ["Date"],
@@ -259,7 +259,7 @@ export async function createControlsSheet(spec: ControlsSheetSpec): Promise<void
     sheet.getRange("B54:B56").values = [["Placeholder"], ["Placeholder"], ["Placeholder"]];
     sheet.getRange("B60:B62").values = [["Placeholer"], ["Placeholer"], ["Placeholer"]];
     sheet.getRange("B66:B68").values = [["Placeholder"], ["Placeholder"], ["Placeholder"]];
-    sheet.getRange("I20:I25").values = [
+    sheet.getRange(`${unitColumnLetter}20:${unitColumnLetter}25`).values = [
       ["Date"],
       ["Date"],
       ["Label"],
@@ -267,9 +267,20 @@ export async function createControlsSheet(spec: ControlsSheetSpec): Promise<void
       ["Year"],
       ["Label"],
     ];
-    sheet.getRange("I28:I31").values = [["Date"], ["Date"], ["Counter"], ["Label"]];
-    sheet.getRange("I34:I38").values = [["Date"], ["Date"], ["#"], ["Label"], ["Counter"]];
-    sheet.getRange("I44:I53").values = [
+    sheet.getRange(`${unitColumnLetter}28:${unitColumnLetter}31`).values = [
+      ["Date"],
+      ["Date"],
+      ["Counter"],
+      ["Label"],
+    ];
+    sheet.getRange(`${unitColumnLetter}34:${unitColumnLetter}38`).values = [
+      ["Date"],
+      ["Date"],
+      ["#"],
+      ["Label"],
+      ["Counter"],
+    ];
+    sheet.getRange(`${unitColumnLetter}44:${unitColumnLetter}53`).values = [
       ["#"],
       ["#"],
       ["'1/0"],
@@ -281,10 +292,14 @@ export async function createControlsSheet(spec: ControlsSheetSpec): Promise<void
       ["'1/0"],
       ["#"],
     ];
-    sheet.getRange("I59").values = [["#"]];
-    sheet.getRange("I65").values = [["#"]];
-    sheet.getRange("I44:I53").numberFormat = Array.from({ length: 10 }, () => ["@"]);
-    sheet.getRange("I44:I53").format.horizontalAlignment = Excel.HorizontalAlignment.left;
+    sheet.getRange(`${unitColumnLetter}59`).values = [["#"]];
+    sheet.getRange(`${unitColumnLetter}65`).values = [["#"]];
+    sheet.getRange(`${unitColumnLetter}44:${unitColumnLetter}53`).numberFormat = Array.from(
+      { length: 10 },
+      () => ["@"]
+    );
+    sheet.getRange(`${unitColumnLetter}44:${unitColumnLetter}53`).format.horizontalAlignment =
+      Excel.HorizontalAlignment.left;
 
     const timelineStartColIndex = spec.constantsColumns;
     const timelineFormulaRangeStart = sheet.getRangeByIndexes(
@@ -627,24 +642,43 @@ export async function createControlsSheet(spec: ControlsSheetSpec): Promise<void
 
 function applyColumnWidths(
   sheet: Excel.Worksheet,
-  widths: ControlsSheetSpec["columnWidths"]
+  widths: ControlsSheetSpec["columnWidths"],
+  constantsColumns: number
 ): void {
   const columns: Array<[string, number]> = [
     ["A", widths.A],
     ["B", widths.B],
     ["C", widths.C],
     ["D", widths.D],
-    ["E", widths.E],
-    ["F", widths.F],
-    ["G", widths.G],
-    ["H", widths.H],
-    ["I", widths.I],
-    ["J", widths.J],
   ];
 
   columns.forEach(([column, width]) => {
     sheet.getRange(`${column}:${column}`).format.columnWidth = toColumnWidthPoints(width);
   });
+
+  const additionalColumns = Math.max(0, constantsColumns - BASE_CONSTANTS_COLUMNS);
+  if (additionalColumns <= 0) {
+    return;
+  }
+
+  const lastIndex = BASE_CONSTANTS_COLUMNS + additionalColumns - 1;
+  const nextToLastIndex = lastIndex - 1;
+  for (let offset = 0; offset < additionalColumns; offset += 1) {
+    const columnIndex = BASE_CONSTANTS_COLUMNS + offset;
+    let width = widths.otherAdditionalColumnsWidth;
+    if (additionalColumns === 1) {
+      width = widths.lastColumnWidth;
+    } else if (additionalColumns === 2) {
+      width = offset === 0 ? widths.nextToLastColumnWidth : widths.lastColumnWidth;
+    } else if (columnIndex === nextToLastIndex) {
+      width = widths.nextToLastColumnWidth;
+    } else if (columnIndex === lastIndex) {
+      width = widths.lastColumnWidth;
+    }
+
+    const columnLetter = columnIndexToLetters(columnIndex);
+    sheet.getRange(`${columnLetter}:${columnLetter}`).format.columnWidth = toColumnWidthPoints(width);
+  }
 }
 
 function applyTimelineColumnWidths(

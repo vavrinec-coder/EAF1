@@ -17,18 +17,16 @@ export type AnnualSheetSpec = {
     B: number;
     C: number;
     D: number;
-    E: number;
-    F: number;
-    G: number;
-    H: number;
-    I: number;
-    J: number;
+    otherAdditionalColumnsWidth: number;
+    nextToLastColumnWidth: number;
+    lastColumnWidth: number;
   };
 };
 
 const DEFAULT_SHEET_RANGE = "A1:ZZ200";
 const COLUMN_HIDE_LIMIT = 200;
 const DEFAULT_TIMELINE_COLUMN_WIDTH = 12;
+const BASE_CONSTANTS_COLUMNS = 4;
 const MAX_EXCEL_COLUMNS = 16384;
 const MAX_EXCEL_ROWS = 1048576;
 
@@ -57,6 +55,8 @@ export async function createAnnualSheet(spec: AnnualSheetSpec): Promise<void> {
     }
 
     const totalModelColumns = spec.constantsColumns + spec.timelineColumns;
+    const unitColumnIndex = Math.max(0, spec.constantsColumns - 2);
+    const unitColumnLetter = columnIndexToLetters(unitColumnIndex);
     sheet.tabColor = spec.tabColor;
     sheet.showGridlines = false;
 
@@ -65,7 +65,7 @@ export async function createAnnualSheet(spec: AnnualSheetSpec): Promise<void> {
     baseRange.format.font.size = spec.font.size;
     baseRange.format.font.color = spec.font.color;
 
-    applyColumnWidths(sheet, spec.columnWidths);
+    applyColumnWidths(sheet, spec.columnWidths, spec.constantsColumns);
     applyTimelineColumnWidths(sheet, spec.constantsColumns, spec.timelineColumns);
 
     const visibleColumnCount = Math.min(totalModelColumns, COLUMN_HIDE_LIMIT);
@@ -167,7 +167,7 @@ export async function createAnnualSheet(spec: AnnualSheetSpec): Promise<void> {
     timelineFormulaRangeEnd.numberFormat = controlsTimelineEnd.numberFormat;
 
     const controlsFlagLabelRange = sheet.getRange("B9:B12");
-    const controlsFlagUnitRange = sheet.getRange("I9:I12");
+    const controlsFlagUnitRange = sheet.getRange(`${unitColumnLetter}9:${unitColumnLetter}12`);
     const controlsFlagTimelineRange = sheet.getRangeByIndexes(
       8,
       timelineStartColIndex,
@@ -210,24 +210,43 @@ export async function createAnnualSheet(spec: AnnualSheetSpec): Promise<void> {
 
 function applyColumnWidths(
   sheet: Excel.Worksheet,
-  widths: AnnualSheetSpec["columnWidths"]
+  widths: AnnualSheetSpec["columnWidths"],
+  constantsColumns: number
 ): void {
   const columns: Array<[string, number]> = [
     ["A", widths.A],
     ["B", widths.B],
     ["C", widths.C],
     ["D", widths.D],
-    ["E", widths.E],
-    ["F", widths.F],
-    ["G", widths.G],
-    ["H", widths.H],
-    ["I", widths.I],
-    ["J", widths.J],
   ];
 
   columns.forEach(([column, width]) => {
     sheet.getRange(`${column}:${column}`).format.columnWidth = toColumnWidthPoints(width);
   });
+
+  const additionalColumns = Math.max(0, constantsColumns - BASE_CONSTANTS_COLUMNS);
+  if (additionalColumns <= 0) {
+    return;
+  }
+
+  const lastIndex = BASE_CONSTANTS_COLUMNS + additionalColumns - 1;
+  const nextToLastIndex = lastIndex - 1;
+  for (let offset = 0; offset < additionalColumns; offset += 1) {
+    const columnIndex = BASE_CONSTANTS_COLUMNS + offset;
+    let width = widths.otherAdditionalColumnsWidth;
+    if (additionalColumns === 1) {
+      width = widths.lastColumnWidth;
+    } else if (additionalColumns === 2) {
+      width = offset === 0 ? widths.nextToLastColumnWidth : widths.lastColumnWidth;
+    } else if (columnIndex === nextToLastIndex) {
+      width = widths.nextToLastColumnWidth;
+    } else if (columnIndex === lastIndex) {
+      width = widths.lastColumnWidth;
+    }
+
+    const columnLetter = columnIndexToLetters(columnIndex);
+    sheet.getRange(`${columnLetter}:${columnLetter}`).format.columnWidth = toColumnWidthPoints(width);
+  }
 }
 
 function applyTimelineColumnWidths(
