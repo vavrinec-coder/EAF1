@@ -199,7 +199,7 @@ export async function createOpexMonthlySheet(
     }
 
     const lineItemsRange = getRangeFromAddress(context, normalizedLineItemsAddress);
-    lineItemsRange.load(["values", "rowCount", "columnCount"]);
+    lineItemsRange.load(["rowCount", "columnCount"]);
     await context.sync();
 
     if (lineItemsRange.rowCount > 0 && lineItemsRange.columnCount > 0) {
@@ -209,7 +209,56 @@ export async function createOpexMonthlySheet(
         lineItemsRange.rowCount,
         lineItemsRange.columnCount
       );
-      targetRange.values = lineItemsRange.values;
+      targetRange.copyFrom(lineItemsRange, Excel.RangeCopyType.all, false, false);
+
+      const listEndRow = 26 + lineItemsRange.rowCount - 1;
+      const forecastingHeaderRow = listEndRow + 2;
+      const forecastingHeaderRange = sheet.getRangeByIndexes(
+        forecastingHeaderRow - 1,
+        0,
+        1,
+        totalModelColumns
+      );
+      forecastingHeaderRange.format.fill.color = spec.sectionColor;
+      sheet.getRange(`A${forecastingHeaderRow}`).values = [["OPEX FORECASTING VARIABLES"]];
+      sheet.getRange(`A${forecastingHeaderRow}`).format.font.color = "#FFFFFF";
+
+      const forecastingItemsStartRow = forecastingHeaderRow + 2;
+      const forecastingItems = [
+        ["Revenue"],
+        ["Payroll"],
+        ["Headcount"],
+        ["Placeholder"],
+        ["Placeholder"],
+        ["Placeholder"],
+      ];
+      sheet.getRangeByIndexes(
+        forecastingItemsStartRow - 1,
+        1,
+        forecastingItems.length,
+        1
+      ).values = forecastingItems;
+
+      const lastForecastingItemRow = forecastingItemsStartRow + forecastingItems.length - 1;
+      const forecastHeaderRow = lastForecastingItemRow + 3;
+      const forecastHeaderRange = sheet.getRangeByIndexes(
+        forecastHeaderRow - 1,
+        0,
+        1,
+        totalModelColumns
+      );
+      forecastHeaderRange.format.fill.color = spec.sectionColor;
+      sheet.getRange(`A${forecastHeaderRow}`).values = [["OPEX FORECAST"]];
+      sheet.getRange(`A${forecastHeaderRow}`).format.font.color = "#FFFFFF";
+
+      const forecastPasteStartRow = forecastHeaderRow + 4;
+      const forecastTargetRange = sheet.getRangeByIndexes(
+        forecastPasteStartRow - 1,
+        1,
+        lineItemsRange.rowCount,
+        lineItemsRange.columnCount
+      );
+      forecastTargetRange.copyFrom(lineItemsRange, Excel.RangeCopyType.all, false, false);
     }
 
     if (totalModelColumns < MAX_EXCEL_COLUMNS) {
