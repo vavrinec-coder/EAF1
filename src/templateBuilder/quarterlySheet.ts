@@ -181,7 +181,7 @@ export async function createQuarterlySheet(spec: QuarterlySheetSpec): Promise<vo
     for (let rowOffset = 0; rowOffset < 4; rowOffset += 1) {
       const controlsRow = 59 + rowOffset;
       flagLabelFormulas.push([`=Controls!B${controlsRow}`]);
-      flagUnitFormulas.push([`=Controls!I${controlsRow}`]);
+      flagUnitFormulas.push([`=Controls!${unitColumnLetter}${controlsRow}`]);
 
       const rowFormulas: string[] = [];
       for (let columnOffset = 0; columnOffset < spec.timelineColumns; columnOffset += 1) {

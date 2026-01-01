@@ -190,7 +190,7 @@ export async function createMonthlySheet(spec: MonthlySheetSpec): Promise<void> 
     for (let rowOffset = 0; rowOffset < 13; rowOffset += 1) {
       const controlsRow = 44 + rowOffset;
       flagLabelFormulas.push([`=Controls!B${controlsRow}`]);
-      flagUnitFormulas.push([`=Controls!I${controlsRow}`]);
+      flagUnitFormulas.push([`=Controls!${unitColumnLetter}${controlsRow}`]);
 
       const rowFormulas: string[] = [];
       for (let columnOffset = 0; columnOffset < spec.timelineColumns; columnOffset += 1) {
