@@ -54,9 +54,6 @@ let destinationRangeInputEl: HTMLInputElement;
 let destinationMappingColumnInputEl: HTMLInputElement;
 let destinationMappingRowInputEl: HTMLInputElement;
 let sourceRangeInputEl: HTMLInputElement;
-let sourceMappingColumnInputEl: HTMLInputElement;
-let sourceMappingColumnRowInputEl: HTMLInputElement;
-let sourceValueColumnInputEl: HTMLInputElement;
 let matchLoadDataButtonEl: HTMLButtonElement;
 let timeHeaderTitleInputEl: HTMLInputElement;
 let timeHeaderFillInputEl: HTMLInputElement;
@@ -112,15 +109,6 @@ Office.onReady((info) => {
   ) as HTMLInputElement;
   sourceRangeInputEl = document.getElementById(
     "match-source-range"
-  ) as HTMLInputElement;
-  sourceMappingColumnInputEl = document.getElementById(
-    "match-source-mapping-column"
-  ) as HTMLInputElement;
-  sourceMappingColumnRowInputEl = document.getElementById(
-    "match-source-mapping-column-row"
-  ) as HTMLInputElement;
-  sourceValueColumnInputEl = document.getElementById(
-    "match-source-value-column"
   ) as HTMLInputElement;
   matchLoadDataButtonEl = document.getElementById("match-load-data") as HTMLButtonElement;
 
@@ -215,9 +203,6 @@ Office.onReady((info) => {
     destinationMappingColumnInputEl,
     destinationMappingRowInputEl,
     sourceRangeInputEl,
-    sourceMappingColumnInputEl,
-    sourceMappingColumnRowInputEl,
-    sourceValueColumnInputEl,
   ].forEach((inputEl) => {
     inputEl.addEventListener("input", () => {
       armRangeCapture(inputEl);
@@ -606,29 +591,11 @@ async function handleMatchLoadData(): Promise<void> {
         sourceRangeInputEl,
         "Source Range"
       );
-      const sourceMappingColumn = getRangeFromInput(
-        context,
-        sourceMappingColumnInputEl,
-        "Source Mapping Column"
-      );
-      const sourceMappingColumnRow = getRangeFromInput(
-        context,
-        sourceMappingColumnRowInputEl,
-        "Source Mapping Column_Row"
-      );
-      const sourceValueColumn = getRangeFromInput(
-        context,
-        sourceValueColumnInputEl,
-        "Source Value Column"
-      );
 
       destinationRange.load(["rowIndex", "rowCount", "columnIndex", "columnCount", "values"]);
       destinationMappingColumn.load(["rowCount", "columnCount", "values"]);
       destinationMappingRow.load(["rowCount", "columnCount", "values"]);
-      sourceRange.load(["rowCount", "columnCount"]);
-      sourceMappingColumn.load(["rowCount", "columnCount", "values"]);
-      sourceMappingColumnRow.load(["rowCount", "columnCount", "values"]);
-      sourceValueColumn.load(["rowCount", "columnCount", "values"]);
+      sourceRange.load(["rowCount", "columnCount", "values"]);
       await context.sync();
 
       if (destinationMappingColumn.columnCount !== 1) {
@@ -647,23 +614,10 @@ async function handleMatchLoadData(): Promise<void> {
         throw new Error("Destination Mapping Row must match Destination Range columns.");
       }
 
-      if (sourceMappingColumn.columnCount !== 1 || sourceMappingColumnRow.columnCount !== 1) {
-        throw new Error("Source Mapping ranges must be a single column.");
-      }
-
-      if (sourceValueColumn.columnCount !== 1) {
-        throw new Error("Source Value Column must be a single column.");
-      }
-
-      if (
-        sourceMappingColumn.rowCount !== sourceMappingColumnRow.rowCount ||
-        sourceMappingColumn.rowCount !== sourceValueColumn.rowCount
-      ) {
-        throw new Error("Source Mapping ranges must match Source Value Column rows.");
-      }
-
-      if (sourceRange.rowCount !== sourceValueColumn.rowCount) {
-        throw new Error("Source Range must match Source Value Column rows.");
+      if (sourceRange.columnCount < 3) {
+        throw new Error(
+          "Source Range must have at least three columns: Mapping Column, Mapping Column_Row, Value."
+        );
       }
 
       const destinationSheet = destinationRange.worksheet;
@@ -676,10 +630,14 @@ async function handleMatchLoadData(): Promise<void> {
       detailRange.load("values");
       await context.sync();
 
+      const sourceMappingColumnValues = sourceRange.values.map((row) => [row[0]]);
+      const sourceMappingRowValues = sourceRange.values.map((row) => [row[1]]);
+      const sourceValueColumnValues = sourceRange.values.map((row) => [row[2]]);
+
       const sourceLookup = buildSourceLookup(
-        sourceMappingColumn.values,
-        sourceMappingColumnRow.values,
-        sourceValueColumn.values
+        sourceMappingColumnValues,
+        sourceMappingRowValues,
+        sourceValueColumnValues
       );
 
       const columnKeys = destinationMappingRow.values[0].map(normalizeColumnKey);
