@@ -3,6 +3,7 @@
 import { createControlsSheet, ControlsSheetSpec } from "../templateBuilder/controlsSheet";
 import { createMonthlySheet, MonthlySheetSpec } from "../templateBuilder/monthlySheet";
 import { createFsMonthlySheet, FsMonthlySheetSpec } from "../templateBuilder/fsMonthlySheet";
+import { createOpexMonthlySheet } from "../templateBuilder/opexMonthlySheet";
 import { createQuarterlySheet, QuarterlySheetSpec } from "../templateBuilder/quarterlySheet";
 import { createAnnualSheet, AnnualSheetSpec } from "../templateBuilder/annualSheet";
 
@@ -41,6 +42,9 @@ let monthlySectionColorInputEl: HTMLInputElement;
 let createFsMonthlyButtonEl: HTMLButtonElement;
 let fsMonthlyTabColorInputEl: HTMLInputElement;
 let fsMonthlySectionColorInputEl: HTMLInputElement;
+let opexLineItemsRangeInputEl: HTMLInputElement;
+let createOpexMonthlyButtonEl: HTMLButtonElement;
+let loadOpexLineItemCategoriesButtonEl: HTMLButtonElement;
 let createQuarterlyButtonEl: HTMLButtonElement;
 let quarterlyTabColorInputEl: HTMLInputElement;
 let quarterlySectionColorInputEl: HTMLInputElement;
@@ -150,6 +154,15 @@ Office.onReady((info) => {
   fsMonthlySectionColorInputEl = document.getElementById(
     "fs-monthly-section-color"
   ) as HTMLInputElement;
+  opexLineItemsRangeInputEl = document.getElementById(
+    "opex-line-items-range"
+  ) as HTMLInputElement;
+  createOpexMonthlyButtonEl = document.getElementById(
+    "create-opex-monthly-sheet"
+  ) as HTMLButtonElement;
+  loadOpexLineItemCategoriesButtonEl = document.getElementById(
+    "load-opex-line-item-categories"
+  ) as HTMLButtonElement;
   createQuarterlyButtonEl = document.getElementById(
     "create-quarterly-sheet"
   ) as HTMLButtonElement;
@@ -203,6 +216,7 @@ Office.onReady((info) => {
     destinationMappingColumnInputEl,
     destinationMappingRowInputEl,
     sourceRangeInputEl,
+    opexLineItemsRangeInputEl,
   ].forEach((inputEl) => {
     inputEl.addEventListener("input", () => {
       armRangeCapture(inputEl);
@@ -220,11 +234,17 @@ Office.onReady((info) => {
   createFsMonthlyButtonEl.addEventListener("click", () => {
     void handleCreateFsMonthlySheet();
   });
+  createOpexMonthlyButtonEl.addEventListener("click", () => {
+    void handleCreateOpexMonthlySheet();
+  });
   createQuarterlyButtonEl.addEventListener("click", () => {
     void handleCreateQuarterlySheet();
   });
   createAnnualButtonEl.addEventListener("click", () => {
     void handleCreateAnnualSheet();
+  });
+  loadOpexLineItemCategoriesButtonEl.addEventListener("click", () => {
+    void handleLoadLineItemCategories();
   });
   constantsTimelineLengthInputEl.addEventListener("input", () => {
     timelineLengthDirty = constantsTimelineLengthInputEl.value.trim().length > 0;
@@ -748,6 +768,29 @@ async function handleCreateFsMonthlySheet(): Promise<void> {
   try {
     await createFsMonthlySheet(result.spec);
     setStatus('Created "FS Monthly" sheet.', "info");
+  } catch (error) {
+    setStatus(getErrorMessage(error), "error");
+  }
+}
+
+async function handleCreateOpexMonthlySheet(): Promise<void> {
+  const result = getMonthlySheetSpecFromForm();
+  if (!result.ok) {
+    setStatus(result.error, "error");
+    return;
+  }
+
+  const lineItemsAddress = opexLineItemsRangeInputEl.value.trim();
+  if (!lineItemsAddress || lineItemsAddress === "=") {
+    setStatus("Opex line items range is required.", "error");
+    return;
+  }
+
+  setStatus('Creating "Opex Monthly" sheet...', "info");
+
+  try {
+    await createOpexMonthlySheet(result.spec, lineItemsAddress);
+    setStatus('Created "Opex Monthly" sheet.', "info");
   } catch (error) {
     setStatus(getErrorMessage(error), "error");
   }

@@ -899,6 +899,38 @@
                 </div>
             </details>
             <details class="collapsible">
+                <summary class="collapsible-summary">Opex Monthly sheet</summary>
+                <div class="collapsible-body">
+                    <div class="template-form">
+                        <div class="form-row">
+                            <div class="form-field">
+                                <label class="form-label" for="opex-line-items-range">Opex line items range</label>
+                                <input
+                                    id="opex-line-items-range"
+                                    class="form-input"
+                                    type="text"
+                                    placeholder="='FS Monthly'!B30:B38"
+                                />
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-actions">
+                        <button id="create-opex-monthly-sheet" class="ms-Button ms-Button--primary" type="button">
+                            <span class="ms-Button-label">Create Opex Monthly sheet</span>
+                        </button>
+                    </div>
+                    <details class="collapsible collapsible--nested">
+                        <summary class="collapsible-summary">Load Line Item Categories</summary>
+                        <div class="collapsible-body">
+                            <p class="form-hint">Select a range in column B to apply line item categories.</p>
+                            <button id="load-opex-line-item-categories" class="ms-Button ms-Button--primary">
+                                <span class="ms-Button-label">Load Line Item Categories</span>
+                            </button>
+                        </div>
+                    </details>
+                </div>
+            </details>
+            <details class="collapsible">
                 <summary class="collapsible-summary">Match and Load Data</summary>
                 <div class="collapsible-body">
                     <div class="template-form">
