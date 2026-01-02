@@ -241,6 +241,7 @@ export async function createOpexMonthlySheet(
       ["Month(s)", "Y1", "Y2", "Y3+", "$ per Month", "ID", "StartDate", "EndDate", "% M", "%"],
     ];
     opexHeaderRange.format.font.bold = true;
+    opexHeaderRange.format.horizontalAlignment = Excel.HorizontalAlignment.right;
 
     if (lineItemsRange.rowCount > 0 && lineItemsRange.columnCount > 0) {
       const targetRange = sheet.getRangeByIndexes(
@@ -252,21 +253,49 @@ export async function createOpexMonthlySheet(
       targetRange.copyFrom(lineItemsRange, Excel.RangeCopyType.all, false, false);
     }
 
-    if (lineItemsRange.rowCount > 1) {
-      const driverRange = sheet.getRangeByIndexes(58, 6, lineItemsRange.rowCount - 1, 1);
+    if (lineItemsRange.rowCount > 0) {
+      const driverRange = sheet.getRangeByIndexes(57, 6, lineItemsRange.rowCount, 1);
       driverRange.dataValidation.rule = {
         list: {
           inCellDropDown: true,
           source: "='Controls'!$B$74:$B$90",
         },
       };
+      const defaultDrivers = Array.from({ length: lineItemsRange.rowCount }, () => ["No Forecast"]);
+      driverRange.values = defaultDrivers;
       driverRange.format.font.color = "#3333FF";
       driverRange.format.fill.color = "#FFFFAB";
       applyHairlineBorders(driverRange);
+
+      const defaultRows = Array.from({ length: lineItemsRange.rowCount }, () => [0]);
+      const applyForecastColumn = (
+        columnIndex: number,
+        numberFormat: string,
+        fontColor?: string
+      ) => {
+        const range = sheet.getRangeByIndexes(57, columnIndex, lineItemsRange.rowCount, 1);
+        range.values = defaultRows;
+        range.numberFormat = Array.from({ length: lineItemsRange.rowCount }, () => [numberFormat]);
+        if (fontColor) {
+          range.format.font.color = fontColor;
+        }
+        applyHairlineBorders(range);
+      };
+
+      applyForecastColumn(7, '#,##0;[Red]-#,##0;"-"', "#3333FF");
+      applyForecastColumn(8, '0.0%;[Red]-0.0%;"-"', "#3333FF");
+      applyForecastColumn(9, '0.0%;[Red]-0.0%;"-"', "#3333FF");
+      applyForecastColumn(10, '0.0%;[Red]-0.0%;"-"', "#3333FF");
+      applyForecastColumn(11, '#,##0;[Red]-#,##0;"-"', "#3333FF");
+      applyForecastColumn(12, '#,##0;[Red]-#,##0;"-"');
+      applyForecastColumn(13, '[$-en-US]d/mmm/yy;[$-en-US]d/mmm/yy;"-";@');
+      applyForecastColumn(14, '[$-en-US]d/mmm/yy;[$-en-US]d/mmm/yy;"-";@');
+      applyForecastColumn(15, '0.0%;[Red]-0.0%;"-"');
+      applyForecastColumn(16, '0.0%;[Red]-0.0%;"-"');
     }
 
     const lineItemsEndRow =
-      lineItemsRange.rowCount > 0 ? 58 + lineItemsRange.rowCount - 1 : 57;
+      lineItemsRange.rowCount > 0 ? 57 + lineItemsRange.rowCount : 57;
     const detailsHeaderRow = lineItemsEndRow + 3;
     const detailsHeaderRange = sheet.getRangeByIndexes(
       detailsHeaderRow - 1,
