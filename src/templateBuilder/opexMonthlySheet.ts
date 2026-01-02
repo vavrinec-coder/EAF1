@@ -405,7 +405,8 @@ function applyHairlineBorders(range: Excel.Range): void {
 
   borderItems.forEach((borderIndex) => {
     const border = borders.getItem(borderIndex);
-    border.style = Excel.BorderLineStyle.hairline;
+    border.style = Excel.BorderLineStyle.continuous;
+    border.weight = Excel.BorderWeight.hairline;
   });
 }
 
