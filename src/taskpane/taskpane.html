@@ -64,7 +64,15 @@
                             </div>
                             <div class="form-field">
                                 <label class="form-label" for="model-header-rows">Number of rows for sheet header</label>
-                                <input id="model-header-rows" class="form-input" type="number" min="1" value="5" />
+                                <input
+                                    id="model-header-rows"
+                                    class="form-input"
+                                    type="number"
+                                    min="1"
+                                    value="5"
+                                    readonly
+                                    style="color: #C00000;"
+                                />
                             </div>
                             <div class="form-field">
                                 <label class="form-label" for="model-header-background">Background color for sheet header</label>
@@ -201,18 +209,6 @@
                         <summary class="collapsible-summary">Constants block</summary>
                         <div class="collapsible-body">
                             <div class="template-form">
-                                <div class="form-row">
-                                    <div class="form-field">
-                                        <label class="form-label" for="constants-timeline-length">Timeline length</label>
-                                        <input
-                                            id="constants-timeline-length"
-                                            class="form-input"
-                                            type="number"
-                                            min="1"
-                                            value="60"
-                                        />
-                                    </div>
-                                </div>
                                 <div class="form-row">
                                     <div class="form-field">
                                         <label class="form-label" for="constants-year-end-month">Financial Year End (month)</label>

@@ -234,15 +234,19 @@ export async function createOpexMonthlySheet(
     forecastHeaderRange.format.fill.color = spec.sectionColor;
     sheet.getRange("A54").values = [["OPEX FORECAST"]];
     sheet.getRange("A54").format.font.color = "#FFFFFF";
+    sheet.getRange("P54:Q54").clear(Excel.ClearApplyTo.contents);
     sheet.getRange("G57").values = [["Driver"]];
     sheet.getRange("G57").format.font.bold = true;
-    const opexHeaderRange = sheet.getRange("H57:Q57");
+    const opexHeaderRange = sheet.getRange("H57:O57");
     opexHeaderRange.values = [
-      ["Month(s)", "Y1", "Y2", "Y3+", "$ per Month", "ID", "StartDate", "EndDate", "% M", "%"],
+      ["Month(s)", "Y1", "Y2", "Y3+", "$ per Month", "ID", "StartDate", "EndDate"],
     ];
     opexHeaderRange.format.font.bold = true;
     opexHeaderRange.format.horizontalAlignment = Excel.HorizontalAlignment.right;
+    sheet.getRange("H57:Q57").format.horizontalAlignment = Excel.HorizontalAlignment.right;
     sheet.getRange("H5:L5").formulas = [["=H57", "=I57", "=J57", "=K57", "=L57"]];
+    sheet.getRange("I56").values = [["Annual % change / % of"]];
+    sheet.getRange("I56").format.font.bold = true;
 
     if (lineItemsRange.rowCount > 0 && lineItemsRange.columnCount > 0) {
       const targetRange = sheet.getRangeByIndexes(
@@ -291,6 +295,23 @@ export async function createOpexMonthlySheet(
       applyForecastColumn(12, '#,##0;[Red]-#,##0;"-"');
       applyForecastColumn(13, '[$-en-US]d/mmm/yy;[$-en-US]d/mmm/yy;"-";@');
       applyForecastColumn(14, '[$-en-US]d/mmm/yy;[$-en-US]d/mmm/yy;"-";@');
+
+      const rowOffsetBase = 58;
+      const matchFormulas = Array.from({ length: lineItemsRange.rowCount }, (_, index) => {
+        const rowNumber = rowOffsetBase + index;
+        return [`=IFNA(MATCH(G${rowNumber},Controls!$B$74:$B$90,0),0)`];
+      });
+      const matchRangeM = sheet.getRangeByIndexes(57, 12, lineItemsRange.rowCount, 1);
+      const matchRangeN = sheet.getRangeByIndexes(57, 13, lineItemsRange.rowCount, 1);
+      matchRangeM.formulas = matchFormulas;
+      matchRangeN.formulas = matchFormulas;
+
+      const opexDateFormulas = Array.from({ length: lineItemsRange.rowCount }, (_, index) => {
+        const rowNumber = rowOffsetBase + index;
+        return [`=IFERROR(IF(M${rowNumber}=9,Controls!$C$10,0),0)`];
+      });
+      const matchRangeO = sheet.getRangeByIndexes(57, 14, lineItemsRange.rowCount, 1);
+      matchRangeO.formulas = opexDateFormulas;
     }
 
     const lineItemsEndRow =
@@ -440,8 +461,8 @@ function applyOpexSpecificColumnWidths(sheet: Excel.Worksheet): void {
     ["M", 5],
     ["N", 12],
     ["O", 12],
-    ["P", 8],
-    ["Q", 8],
+    ["P", 1],
+    ["Q", 1],
   ];
 
   widths.forEach(([column, width]) => {

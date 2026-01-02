@@ -62,7 +62,6 @@ let matchLoadDataButtonEl: HTMLButtonElement;
 let timeHeaderTitleInputEl: HTMLInputElement;
 let timeHeaderFillInputEl: HTMLInputElement;
 let timeHeaderFontColorInputEl: HTMLInputElement;
-let constantsTimelineLengthInputEl: HTMLInputElement;
 let constantsStartDateInputEl: HTMLInputElement;
 let constantsActualsEndInputEl: HTMLInputElement;
 let constantsYearEndMonthInputEl: HTMLSelectElement;
@@ -71,8 +70,6 @@ let constantsForecastPeriodInputEl: HTMLInputElement;
 let flagsHeaderTitleInputEl: HTMLInputElement;
 let flagsHeaderFillInputEl: HTMLInputElement;
 let flagsHeaderFontColorInputEl: HTMLInputElement;
-
-let timelineLengthDirty = false;
 let activeRangeInputEl: HTMLInputElement | null = null;
 
 Office.onReady((info) => {
@@ -176,9 +173,6 @@ Office.onReady((info) => {
   timeHeaderTitleInputEl = document.getElementById("time-header-title") as HTMLInputElement;
   timeHeaderFillInputEl = document.getElementById("time-header-fill") as HTMLInputElement;
   timeHeaderFontColorInputEl = document.getElementById("time-header-font-color") as HTMLInputElement;
-  constantsTimelineLengthInputEl = document.getElementById(
-    "constants-timeline-length"
-  ) as HTMLInputElement;
   constantsStartDateInputEl = document.getElementById("constants-start-date") as HTMLInputElement;
   constantsActualsEndInputEl = document.getElementById("constants-actuals-end") as HTMLInputElement;
   constantsYearEndMonthInputEl = document.getElementById(
@@ -246,12 +240,6 @@ Office.onReady((info) => {
   loadOpexLineItemCategoriesButtonEl.addEventListener("click", () => {
     void handleLoadLineItemCategories();
   });
-  constantsTimelineLengthInputEl.addEventListener("input", () => {
-    timelineLengthDirty = constantsTimelineLengthInputEl.value.trim().length > 0;
-  });
-  timelineColumnsInputEl.addEventListener("input", () => {
-    syncDerivedDefaults();
-  });
   Office.context.document.addHandlerAsync(
     Office.EventType.DocumentSelectionChanged,
     () => {
@@ -264,7 +252,6 @@ Office.onReady((info) => {
 
   renderHeaders([]);
   setStatus("Ready. Select a range and click Load Selection.", "info");
-  syncDerivedDefaults(true);
 });
 
 type SelectionData = {
@@ -929,10 +916,7 @@ function getControlsSheetSpecFromForm(): ControlsSheetFormResult {
     return { ok: false, error: "Constants block exceeds worksheet row limits." };
   }
 
-  const constantsTimelineLength = parsePositiveInt(constantsTimelineLengthInputEl.value);
-  if (constantsTimelineLength === null) {
-    return { ok: false, error: "Timeline length must be a whole number of 1 or greater." };
-  }
+  const constantsTimelineLength = timelineColumns;
 
   const financialYearEndMonth = parsePositiveInt(constantsYearEndMonthInputEl.value);
   if (financialYearEndMonth === null || financialYearEndMonth > 12) {
@@ -1930,18 +1914,6 @@ function parseDateInput(value: string): Date | null {
   }
 
   return new Date(year, month - 1, day);
-}
-
-function syncDerivedDefaults(force = false): void {
-  const timelineColumns = parsePositiveInt(timelineColumnsInputEl.value);
-  if (timelineColumns === null) {
-    return;
-  }
-
-  if (force || !timelineLengthDirty) {
-    constantsTimelineLengthInputEl.value = timelineColumns.toString();
-    timelineLengthDirty = false;
-  }
 }
 
 function isValidHexColor(value: string): boolean {
