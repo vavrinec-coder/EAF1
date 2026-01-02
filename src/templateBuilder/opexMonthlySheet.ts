@@ -53,6 +53,7 @@ export async function createOpexMonthlySheet(
 
     applyColumnWidths(sheet, spec.columnWidths, spec.constantsColumns);
     applyTimelineColumnWidths(sheet, spec.constantsColumns, spec.timelineColumns);
+    applyOpexSpecificColumnWidths(sheet);
 
     const visibleColumnCount = Math.min(totalModelColumns, COLUMN_HIDE_LIMIT);
     if (visibleColumnCount > 0) {
@@ -235,6 +236,11 @@ export async function createOpexMonthlySheet(
     sheet.getRange("A54").format.font.color = "#FFFFFF";
     sheet.getRange("G57").values = [["Driver"]];
     sheet.getRange("G57").format.font.bold = true;
+    const opexHeaderRange = sheet.getRange("H57:Q57");
+    opexHeaderRange.values = [
+      ["Month(s)", "Y1", "Y2", "Y3+", "$ per Month", "ID", "StartDate", "EndDate", "% M", "%"],
+    ];
+    opexHeaderRange.format.font.bold = true;
 
     if (lineItemsRange.rowCount > 0 && lineItemsRange.columnCount > 0) {
       const targetRange = sheet.getRangeByIndexes(
@@ -274,6 +280,7 @@ export async function createOpexMonthlySheet(
 
     const controlsHeaderRange = controlsSheet.getRangeByIndexes(70, 0, 1, totalModelColumns);
     controlsHeaderRange.format.fill.color = controlsHeaderCell.format.fill.color;
+    controlsSheet.getRange("B71").values = [["OPEX DRIVERS"]];
 
     const controlsHeaderLabels = controlsSheet.getRange("B73:C73");
     controlsHeaderLabels.values = [["Opex drivers", "Driver ID"]];
@@ -390,6 +397,26 @@ function applyTimelineColumnWidths(
   const startIndex = constantsColumns;
   const range = sheet.getRangeByIndexes(0, startIndex, 1, timelineColumns);
   range.format.columnWidth = toColumnWidthPoints(DEFAULT_TIMELINE_COLUMN_WIDTH);
+}
+
+function applyOpexSpecificColumnWidths(sheet: Excel.Worksheet): void {
+  const widths: Array<[string, number]> = [
+    ["G", 20],
+    ["H", 11],
+    ["I", 8],
+    ["J", 8],
+    ["K", 8],
+    ["L", 14],
+    ["M", 5],
+    ["N", 12],
+    ["O", 12],
+    ["P", 8],
+    ["Q", 8],
+  ];
+
+  widths.forEach(([column, width]) => {
+    sheet.getRange(`${column}:${column}`).format.columnWidth = toColumnWidthPoints(width);
+  });
 }
 
 function applyHairlineBorders(range: Excel.Range): void {
