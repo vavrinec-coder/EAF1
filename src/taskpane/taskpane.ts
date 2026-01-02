@@ -10,7 +10,7 @@ import { createAnnualSheet, AnnualSheetSpec } from "../templateBuilder/annualShe
 const MAX_EXCEL_ROWS = 1048576;
 const MAX_EXCEL_COLUMNS = 16384;
 const BASE_CONSTANTS_COLUMNS = 4;
-const MIN_ADDITIONAL_COLUMNS = 6;
+const MIN_ADDITIONAL_COLUMNS = 20;
 const DEFAULT_TIME_HEADER_START_CELL = "A7";
 const DEFAULT_TIME_HEADER_ROWS = 1;
 const DEFAULT_CONSTANTS_START_ROW = 9;
@@ -1471,14 +1471,14 @@ function getAdditionalColumnsFromForm(): AdditionalColumnsResult {
   if (additionalColumns === null) {
     return {
       ok: false,
-      error: `No of additional columns must be a whole number of ${MIN_ADDITIONAL_COLUMNS} or greater.`,
+      error: `No of additional columns must be a whole number of ${MIN_ADDITIONAL_COLUMNS}.`,
     };
   }
 
-  if (additionalColumns < MIN_ADDITIONAL_COLUMNS) {
+  if (additionalColumns !== MIN_ADDITIONAL_COLUMNS) {
     return {
       ok: false,
-      error: `No of additional columns must be ${MIN_ADDITIONAL_COLUMNS} or greater.`,
+      error: `No of additional columns is fixed at ${MIN_ADDITIONAL_COLUMNS}.`,
     };
   }
 
@@ -1819,16 +1819,20 @@ type FsFormattingRowInput = {
 
 function applyFsFormattingForRow(sheet: Excel.Worksheet, input: FsFormattingRowInput): void {
   const { rowIndex, totalColumns, timelineStartColumn, timelineColumns, rule } = input;
-  const beforeCategoryWidth = Math.min(3, totalColumns - 1);
-  if (beforeCategoryWidth > 0) {
-    const beforeCategoryRange = sheet.getRangeByIndexes(rowIndex, 1, 1, beforeCategoryWidth);
-    applyFsFormattingToRange(beforeCategoryRange, rule);
+  const baseRangeWidth = Math.min(3, totalColumns - 1);
+  if (baseRangeWidth > 0) {
+    const baseRange = sheet.getRangeByIndexes(rowIndex, 1, 1, baseRangeWidth);
+    applyFsFormattingToRange(baseRange, rule);
   }
 
-  const afterCategoryWidth = totalColumns - 5;
-  if (afterCategoryWidth > 0) {
-    const afterCategoryRange = sheet.getRangeByIndexes(rowIndex, 5, 1, afterCategoryWidth);
-    applyFsFormattingToRange(afterCategoryRange, rule);
+  if (timelineColumns > 0) {
+    const timelineRange = sheet.getRangeByIndexes(
+      rowIndex,
+      timelineStartColumn,
+      1,
+      timelineColumns
+    );
+    applyFsFormattingToRange(timelineRange, rule);
   }
 
   const indentCell = sheet.getRangeByIndexes(rowIndex, 1, 1, 1);
