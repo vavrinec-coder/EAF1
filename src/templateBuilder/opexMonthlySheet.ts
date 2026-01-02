@@ -188,9 +188,9 @@ export async function createOpexMonthlySheet(
     controlsFlagTimelineRange.formulas = flagTimelineFormulas;
     controlsFlagUnitRange.format.horizontalAlignment = Excel.HorizontalAlignment.left;
 
-    const opexHeaderRange = sheet.getRangeByIndexes(23, 0, 1, totalModelColumns);
-    opexHeaderRange.format.fill.color = spec.sectionColor;
-    sheet.getRange("A24").values = [["OPEX HISTORICALS"]];
+    const variablesHeaderRange = sheet.getRangeByIndexes(23, 0, 1, totalModelColumns);
+    variablesHeaderRange.format.fill.color = spec.sectionColor;
+    sheet.getRange("A24").values = [["VARIABLES FOR OPEX FORECASTING"]];
     sheet.getRange("A24").format.font.color = "#FFFFFF";
 
     const normalizedLineItemsAddress = normalizeRangeAddress(lineItemsAddress);
@@ -202,64 +202,56 @@ export async function createOpexMonthlySheet(
     lineItemsRange.load(["rowCount", "columnCount"]);
     await context.sync();
 
+    const variablesItems = [
+      ["Revenue"],
+      ["New Revenue"],
+      ["Payroll"],
+      ["New Payroll"],
+      ["Headcount"],
+      ["New Headcount"],
+      ["Number of Customers"],
+      ["Number of New Customers"],
+      ["Placeholder"],
+      ["Placeholder"],
+      ["Placeholder"],
+    ];
+    sheet.getRangeByIndexes(25, 1, variablesItems.length, 1).values = variablesItems;
+
+    const linkedHeaderRange = sheet.getRangeByIndexes(38, 0, 1, totalModelColumns);
+    linkedHeaderRange.format.fill.color = spec.sectionColor;
+    sheet.getRange("A39").values = [["OPEX LINKED CALCULATIONS"]];
+    sheet.getRange("A39").format.font.color = "#FFFFFF";
+
+    const linkedPlaceholders = Array.from({ length: 10 }, () => ["Placeholder"]);
+    sheet.getRangeByIndexes(41, 1, linkedPlaceholders.length, 1).values = linkedPlaceholders;
+
+    const forecastHeaderRange = sheet.getRangeByIndexes(53, 0, 1, totalModelColumns);
+    forecastHeaderRange.format.fill.color = spec.sectionColor;
+    sheet.getRange("A54").values = [["OPEX FORECAST"]];
+    sheet.getRange("A54").format.font.color = "#FFFFFF";
+
     if (lineItemsRange.rowCount > 0 && lineItemsRange.columnCount > 0) {
       const targetRange = sheet.getRangeByIndexes(
-        25,
+        57,
         1,
         lineItemsRange.rowCount,
         lineItemsRange.columnCount
       );
       targetRange.copyFrom(lineItemsRange, Excel.RangeCopyType.all, false, false);
-
-      const listEndRow = 26 + lineItemsRange.rowCount - 1;
-      const forecastingHeaderRow = listEndRow + 2;
-      const forecastingHeaderRange = sheet.getRangeByIndexes(
-        forecastingHeaderRow - 1,
-        0,
-        1,
-        totalModelColumns
-      );
-      forecastingHeaderRange.format.fill.color = spec.sectionColor;
-      sheet.getRange(`A${forecastingHeaderRow}`).values = [["OPEX FORECASTING VARIABLES"]];
-      sheet.getRange(`A${forecastingHeaderRow}`).format.font.color = "#FFFFFF";
-
-      const forecastingItemsStartRow = forecastingHeaderRow + 2;
-      const forecastingItems = [
-        ["Revenue"],
-        ["Payroll"],
-        ["Headcount"],
-        ["Placeholder"],
-        ["Placeholder"],
-        ["Placeholder"],
-      ];
-      sheet.getRangeByIndexes(
-        forecastingItemsStartRow - 1,
-        1,
-        forecastingItems.length,
-        1
-      ).values = forecastingItems;
-
-      const lastForecastingItemRow = forecastingItemsStartRow + forecastingItems.length - 1;
-      const forecastHeaderRow = lastForecastingItemRow + 3;
-      const forecastHeaderRange = sheet.getRangeByIndexes(
-        forecastHeaderRow - 1,
-        0,
-        1,
-        totalModelColumns
-      );
-      forecastHeaderRange.format.fill.color = spec.sectionColor;
-      sheet.getRange(`A${forecastHeaderRow}`).values = [["OPEX FORECAST"]];
-      sheet.getRange(`A${forecastHeaderRow}`).format.font.color = "#FFFFFF";
-
-      const forecastPasteStartRow = forecastHeaderRow + 4;
-      const forecastTargetRange = sheet.getRangeByIndexes(
-        forecastPasteStartRow - 1,
-        1,
-        lineItemsRange.rowCount,
-        lineItemsRange.columnCount
-      );
-      forecastTargetRange.copyFrom(lineItemsRange, Excel.RangeCopyType.all, false, false);
     }
+
+    const lineItemsEndRow =
+      lineItemsRange.rowCount > 0 ? 58 + lineItemsRange.rowCount - 1 : 57;
+    const detailsHeaderRow = lineItemsEndRow + 3;
+    const detailsHeaderRange = sheet.getRangeByIndexes(
+      detailsHeaderRow - 1,
+      0,
+      1,
+      totalModelColumns
+    );
+    detailsHeaderRange.format.fill.color = spec.sectionColor;
+    sheet.getRange(`A${detailsHeaderRow}`).values = [["LINE ITEM DETAILS / VENDORS"]];
+    sheet.getRange(`A${detailsHeaderRow}`).format.font.color = "#FFFFFF";
 
     if (totalModelColumns < MAX_EXCEL_COLUMNS) {
       const clearColumnCount = MAX_EXCEL_COLUMNS - totalModelColumns;
