@@ -25,6 +25,10 @@ export async function createOpexMonthlySheet(
       throw new Error('Controls sheet not found. Create the "Controls" sheet first.');
     }
 
+    const controlsHeaderCell = controlsSheet.getRange("A7");
+    controlsHeaderCell.load("format/fill/color");
+    await context.sync();
+
     if (sheet.isNullObject) {
       sheet = worksheets.add("Opex Monthly");
     } else {
@@ -229,6 +233,8 @@ export async function createOpexMonthlySheet(
     forecastHeaderRange.format.fill.color = spec.sectionColor;
     sheet.getRange("A54").values = [["OPEX FORECAST"]];
     sheet.getRange("A54").format.font.color = "#FFFFFF";
+    sheet.getRange("G57").values = [["Driver"]];
+    sheet.getRange("G57").format.font.bold = true;
 
     if (lineItemsRange.rowCount > 0 && lineItemsRange.columnCount > 0) {
       const targetRange = sheet.getRangeByIndexes(
@@ -238,6 +244,19 @@ export async function createOpexMonthlySheet(
         lineItemsRange.columnCount
       );
       targetRange.copyFrom(lineItemsRange, Excel.RangeCopyType.all, false, false);
+    }
+
+    if (lineItemsRange.rowCount > 1) {
+      const driverRange = sheet.getRangeByIndexes(58, 1, lineItemsRange.rowCount - 1, 1);
+      driverRange.dataValidation.rule = {
+        list: {
+          inCellDropDown: true,
+          source: "='Controls'!$B$74:$B$90",
+        },
+      };
+      driverRange.format.font.color = "#3333FF";
+      driverRange.format.fill.color = "#FFFFAB";
+      applyHairlineBorders(driverRange);
     }
 
     const lineItemsEndRow =
@@ -252,6 +271,22 @@ export async function createOpexMonthlySheet(
     detailsHeaderRange.format.fill.color = spec.sectionColor;
     sheet.getRange(`A${detailsHeaderRow}`).values = [["LINE ITEM DETAILS / VENDORS"]];
     sheet.getRange(`A${detailsHeaderRow}`).format.font.color = "#FFFFFF";
+
+    const controlsHeaderRange = controlsSheet.getRangeByIndexes(70, 0, 1, totalModelColumns);
+    controlsHeaderRange.format.fill.color = controlsHeaderCell.format.fill.color;
+
+    const controlsHeaderLabels = controlsSheet.getRange("B73:C73");
+    controlsHeaderLabels.values = [["Opex drivers", "Driver ID"]];
+    controlsHeaderLabels.format.font.bold = true;
+
+    const driversLabelRange = controlsSheet.getRange("B74:B90");
+    const driversIdRange = controlsSheet.getRange("C74:C90");
+    driversLabelRange.format.font.color = "#3333FF";
+    driversLabelRange.format.fill.color = "#FFFFAB";
+    applyHairlineBorders(driversLabelRange);
+    driversIdRange.format.font.color = "#3333FF";
+    driversIdRange.format.fill.clear();
+    applyHairlineBorders(driversIdRange);
 
     if (totalModelColumns < MAX_EXCEL_COLUMNS) {
       const clearColumnCount = MAX_EXCEL_COLUMNS - totalModelColumns;
@@ -317,6 +352,23 @@ function applyTimelineColumnWidths(
   const startIndex = constantsColumns;
   const range = sheet.getRangeByIndexes(0, startIndex, 1, timelineColumns);
   range.format.columnWidth = toColumnWidthPoints(DEFAULT_TIMELINE_COLUMN_WIDTH);
+}
+
+function applyHairlineBorders(range: Excel.Range): void {
+  const borders = range.format.borders;
+  const borderItems = [
+    Excel.BorderIndex.edgeTop,
+    Excel.BorderIndex.edgeBottom,
+    Excel.BorderIndex.edgeLeft,
+    Excel.BorderIndex.edgeRight,
+    Excel.BorderIndex.insideHorizontal,
+    Excel.BorderIndex.insideVertical,
+  ];
+
+  borderItems.forEach((borderIndex) => {
+    const border = borders.getItem(borderIndex);
+    border.style = Excel.BorderLineStyle.hairline;
+  });
 }
 
 function toColumnWidthPoints(width: number): number {
