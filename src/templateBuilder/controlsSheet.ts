@@ -180,6 +180,8 @@ export async function createControlsSheet(spec: ControlsSheetSpec): Promise<void
       [spec.constantsBlock.forecastPeriod],
     ];
     valueRange.format.horizontalAlignment = Excel.HorizontalAlignment.right;
+    sheet.getRange("D12").values = [["Don not change"]];
+    sheet.getRange("D12").format.font.color = "#C00000";
 
     const row1 = constantsStartRow;
     const row2 = constantsStartRow + 1;
@@ -260,8 +262,6 @@ export async function createControlsSheet(spec: ControlsSheetSpec): Promise<void
     sheet.getRange("B60:B62").values = [["Placeholer"], ["Placeholer"], ["Placeholer"]];
     sheet.getRange("B66:B68").values = [["Placeholder"], ["Placeholder"], ["Placeholder"]];
     sheet.getRange(`${unitColumnLetter}54`).values = [["#"]];
-    sheet.getRange("D72").values = [["Do not change"]];
-    sheet.getRange("D72").format.font.color = "#C00000";
     sheet.getRange(`${unitColumnLetter}20:${unitColumnLetter}25`).values = [
       ["Date"],
       ["Date"],

@@ -207,6 +207,11 @@ export async function createOpexMonthlySheet(
     lineItemsRange.load(["rowCount", "columnCount"]);
     await context.sync();
 
+    const lineItemsEndRow =
+      lineItemsRange.rowCount > 0 ? 57 + lineItemsRange.rowCount : 57;
+    const opexAccountSource =
+      lineItemsRange.rowCount > 0 ? `=$B$58:$B$${lineItemsEndRow}` : "";
+
     const variablesItems = [
       ["Revenue"],
       ["New Revenue"],
@@ -226,6 +231,11 @@ export async function createOpexMonthlySheet(
     linkedHeaderRange.format.fill.color = spec.sectionColor;
     sheet.getRange("A39").values = [["OPEX LINKED CALCULATIONS"]];
     sheet.getRange("A39").format.font.color = "#FFFFFF";
+
+    sheet.getRange("B41").values = [["Description"]];
+    sheet.getRange("B41").format.font.bold = true;
+    sheet.getRange("G41").values = [["Map to Opex account:"]];
+    sheet.getRange("G41").format.font.bold = true;
 
     const linkedPlaceholders = Array.from({ length: 10 }, () => ["Placeholder"]);
     sheet.getRangeByIndexes(41, 1, linkedPlaceholders.length, 1).values = linkedPlaceholders;
@@ -272,6 +282,19 @@ export async function createOpexMonthlySheet(
       driverRange.format.fill.color = "#FFFFAB";
       applyHairlineBorders(driverRange);
 
+      if (opexAccountSource) {
+        const mapRange = sheet.getRange("G41:G51");
+        mapRange.dataValidation.rule = {
+          list: {
+            inCellDropDown: true,
+            source: opexAccountSource,
+          },
+        };
+        mapRange.format.font.color = "#3333FF";
+        mapRange.format.fill.color = "#FFFFAB";
+        applyHairlineBorders(mapRange);
+      }
+
       const defaultRows = Array.from({ length: lineItemsRange.rowCount }, () => [0]);
       const applyForecastColumn = (
         columnIndex: number,
@@ -302,9 +325,16 @@ export async function createOpexMonthlySheet(
         return [`=IFNA(MATCH(G${rowNumber},Controls!$B$74:$B$90,0),0)`];
       });
       const matchRangeM = sheet.getRangeByIndexes(57, 12, lineItemsRange.rowCount, 1);
-      const matchRangeN = sheet.getRangeByIndexes(57, 13, lineItemsRange.rowCount, 1);
       matchRangeM.formulas = matchFormulas;
-      matchRangeN.formulas = matchFormulas;
+
+      const matchRangeN = sheet.getRangeByIndexes(57, 13, lineItemsRange.rowCount, 1);
+      const nFormulas = Array.from({ length: lineItemsRange.rowCount }, (_, index) => {
+        const rowNumber = rowOffsetBase + index;
+        return [
+          `=IFERROR(IF(M${rowNumber}=9,EOMONTH(MAX(Controls!$C$9,EDATE(Controls!$C$11,-$H${rowNumber})),0),0),0)`,
+        ];
+      });
+      matchRangeN.formulas = nFormulas;
 
       const opexDateFormulas = Array.from({ length: lineItemsRange.rowCount }, (_, index) => {
         const rowNumber = rowOffsetBase + index;
@@ -314,8 +344,6 @@ export async function createOpexMonthlySheet(
       matchRangeO.formulas = opexDateFormulas;
     }
 
-    const lineItemsEndRow =
-      lineItemsRange.rowCount > 0 ? 57 + lineItemsRange.rowCount : 57;
     const detailsHeaderRow = lineItemsEndRow + 3;
     const detailsHeaderRange = sheet.getRangeByIndexes(
       detailsHeaderRow - 1,
@@ -326,6 +354,37 @@ export async function createOpexMonthlySheet(
     detailsHeaderRange.format.fill.color = spec.sectionColor;
     sheet.getRange(`A${detailsHeaderRow}`).values = [["LINE ITEM DETAILS / VENDORS"]];
     sheet.getRange(`A${detailsHeaderRow}`).format.font.color = "#FFFFFF";
+
+    const detailLabelsRow = detailsHeaderRow + 2;
+    sheet.getRange(`B${detailLabelsRow}`).values = [["Line Item Detail / Vendor"]];
+    sheet.getRange(`B${detailLabelsRow}`).format.font.bold = true;
+    sheet.getRange(`G${detailLabelsRow}`).values = [["Map to Opex account:"]];
+    sheet.getRange(`G${detailLabelsRow}`).format.font.bold = true;
+
+    if (lineItemsRange.rowCount > 0 && opexAccountSource) {
+      const detailPlaceholderStartRow = detailLabelsRow + 1;
+      const detailPlaceholderCount = 100;
+      const detailPlaceholders = Array.from({ length: detailPlaceholderCount }, () => ["PLACEHOLDER"]);
+      sheet
+        .getRangeByIndexes(detailPlaceholderStartRow - 1, 1, detailPlaceholderCount, 1)
+        .values = detailPlaceholders;
+
+      const detailMapRange = sheet.getRangeByIndexes(
+        detailPlaceholderStartRow - 1,
+        6,
+        detailPlaceholderCount,
+        1
+      );
+      detailMapRange.dataValidation.rule = {
+        list: {
+          inCellDropDown: true,
+          source: opexAccountSource,
+        },
+      };
+      detailMapRange.format.font.color = "#3333FF";
+      detailMapRange.format.fill.color = "#FFFFAB";
+      applyHairlineBorders(detailMapRange);
+    }
 
     const controlsHeaderRange = controlsSheet.getRangeByIndexes(70, 0, 1, totalModelColumns);
     controlsHeaderRange.format.fill.color = controlsHeaderCell.format.fill.color;
