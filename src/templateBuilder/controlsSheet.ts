@@ -256,9 +256,10 @@ export async function createControlsSheet(spec: ControlsSheetSpec): Promise<void
     sheet.getRange("B64").values = [["Annual flags"]];
     sheet.getRange("B64").format.font.bold = true;
     sheet.getRange("B65").values = [["Year End Column on monthly timeline"]];
-    sheet.getRange("B54:B56").values = [["Placeholder"], ["Placeholder"], ["Placeholder"]];
+    sheet.getRange("B54:B56").values = [["Forecast Year Counter"], ["Placeholder"], ["Placeholder"]];
     sheet.getRange("B60:B62").values = [["Placeholer"], ["Placeholer"], ["Placeholer"]];
     sheet.getRange("B66:B68").values = [["Placeholder"], ["Placeholder"], ["Placeholder"]];
+    sheet.getRange(`${unitColumnLetter}54`).values = [["#"]];
     sheet.getRange(`${unitColumnLetter}20:${unitColumnLetter}25`).values = [
       ["Date"],
       ["Date"],
@@ -466,6 +467,12 @@ export async function createControlsSheet(spec: ControlsSheetSpec): Promise<void
       1,
       spec.timelineColumns
     );
+    const timelineFormulaRangeForecastYearCounter = sheet.getRangeByIndexes(
+      53,
+      timelineStartColIndex,
+      1,
+      spec.timelineColumns
+    );
 
     const startDateFormulas: string[] = [];
     const endDateFormulas: string[] = [];
@@ -494,6 +501,7 @@ export async function createControlsSheet(spec: ControlsSheetSpec): Promise<void
     const flagsYearCounterFormulas: string[] = [];
     const flagsYearEndFlagFormulas: string[] = [];
     const flagsQuarterCounterFormulas: string[] = [];
+    const forecastYearCounterFormulas: string[] = [];
     const timelineStartColumnLetter = columnIndexToLetters(timelineStartColIndex);
     const timelineEndColumnLetter = columnIndexToLetters(
       timelineStartColIndex + spec.timelineColumns - 1
@@ -563,6 +571,9 @@ export async function createControlsSheet(spec: ControlsSheetSpec): Promise<void
       flagsQuarterCounterFormulas.push(
         `=IF(ISBLANK(${prevColumnLetter}53),1,IF(${columnLetter}25=${prevColumnLetter}25,${prevColumnLetter}53,${prevColumnLetter}53+1))`
       );
+      forecastYearCounterFormulas.push(
+        `=IF(${columnLetter}46=1,0,IF(${columnLetter}48=1,1,IF(${prevColumnLetter}52=1,${prevColumnLetter}54+1,${prevColumnLetter}54)))`
+      );
     }
 
     timelineFormulaRangeStart.formulas = [startDateFormulas];
@@ -598,6 +609,7 @@ export async function createControlsSheet(spec: ControlsSheetSpec): Promise<void
     timelineFormulaRangeFlagsYearCounter.formulas = [flagsYearCounterFormulas];
     timelineFormulaRangeFlagsYearEndFlag.formulas = [flagsYearEndFlagFormulas];
     timelineFormulaRangeFlagsQuarterCounter.formulas = [flagsQuarterCounterFormulas];
+    timelineFormulaRangeForecastYearCounter.formulas = [forecastYearCounterFormulas];
     timelineFormulaRangeType.format.horizontalAlignment = "Right";
     timelineFormulaRangeQuarter.format.horizontalAlignment = "Right";
     timelineFormulaRangeStart.numberFormat = [

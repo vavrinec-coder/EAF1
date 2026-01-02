@@ -242,6 +242,7 @@ export async function createOpexMonthlySheet(
     ];
     opexHeaderRange.format.font.bold = true;
     opexHeaderRange.format.horizontalAlignment = Excel.HorizontalAlignment.right;
+    sheet.getRange("H5:L5").formulas = [["=H57", "=I57", "=J57", "=K57", "=L57"]];
 
     if (lineItemsRange.rowCount > 0 && lineItemsRange.columnCount > 0) {
       const targetRange = sheet.getRangeByIndexes(
@@ -290,8 +291,6 @@ export async function createOpexMonthlySheet(
       applyForecastColumn(12, '#,##0;[Red]-#,##0;"-"');
       applyForecastColumn(13, '[$-en-US]d/mmm/yy;[$-en-US]d/mmm/yy;"-";@');
       applyForecastColumn(14, '[$-en-US]d/mmm/yy;[$-en-US]d/mmm/yy;"-";@');
-      applyForecastColumn(15, '0.0%;[Red]-0.0%;"-"');
-      applyForecastColumn(16, '0.0%;[Red]-0.0%;"-"');
     }
 
     const lineItemsEndRow =
@@ -430,6 +429,8 @@ function applyTimelineColumnWidths(
 
 function applyOpexSpecificColumnWidths(sheet: Excel.Worksheet): void {
   const widths: Array<[string, number]> = [
+    ["C", 2],
+    ["D", 2],
     ["G", 20],
     ["H", 11],
     ["I", 8],
