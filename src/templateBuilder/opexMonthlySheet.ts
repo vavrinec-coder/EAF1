@@ -247,7 +247,7 @@ export async function createOpexMonthlySheet(
     }
 
     if (lineItemsRange.rowCount > 1) {
-      const driverRange = sheet.getRangeByIndexes(58, 1, lineItemsRange.rowCount - 1, 1);
+      const driverRange = sheet.getRangeByIndexes(58, 6, lineItemsRange.rowCount - 1, 1);
       driverRange.dataValidation.rule = {
         list: {
           inCellDropDown: true,
@@ -281,6 +281,44 @@ export async function createOpexMonthlySheet(
 
     const driversLabelRange = controlsSheet.getRange("B74:B90");
     const driversIdRange = controlsSheet.getRange("C74:C90");
+    driversLabelRange.values = [
+      ["% of Revenue"],
+      ["% of New Revenue"],
+      ["% of Payroll"],
+      ["% of New Payroll"],
+      ["Cost per New Customer"],
+      ["Cost per Customer"],
+      ["Cost per Headcount"],
+      ["Cost per New Headcount"],
+      ["Trailing Avg [+] Growth"],
+      ["Lookback [+] Growth"],
+      ["Fixed Value [+] Inflation"],
+      ["LID / Vendor"],
+      ["Linked Calculation"],
+      ["Placeholder"],
+      ["Placeholder"],
+      ["Placeholder"],
+      ["No Forecast"],
+    ];
+    driversIdRange.values = [
+      [1],
+      [2],
+      [3],
+      [4],
+      [5],
+      [6],
+      [7],
+      [8],
+      [9],
+      [10],
+      [11],
+      [12],
+      [13],
+      [13],
+      [14],
+      [15],
+      [16],
+    ];
     driversLabelRange.format.font.color = "#3333FF";
     driversLabelRange.format.fill.color = "#FFFFAB";
     applyHairlineBorders(driversLabelRange);
