@@ -197,6 +197,23 @@ export async function createQuarterlySheet(spec: QuarterlySheetSpec): Promise<vo
     controlsFlagTimelineRange.formulas = flagTimelineFormulas;
     controlsFlagUnitRange.format.horizontalAlignment = Excel.HorizontalAlignment.left;
 
+    const bodyRowStart = 5;
+    const bodyRowCount = 995;
+    const bodyRange = sheet.getRangeByIndexes(bodyRowStart, 0, bodyRowCount, totalModelColumns);
+    bodyRange.format.font.name = spec.font.name;
+    bodyRange.format.font.size = spec.font.size;
+    if (spec.timelineColumns > 0) {
+      const timelineBodyRange = sheet.getRangeByIndexes(
+        bodyRowStart,
+        timelineStartColIndex,
+        bodyRowCount,
+        spec.timelineColumns
+      );
+      timelineBodyRange.numberFormat = Array.from({ length: bodyRowCount }, () =>
+        Array.from({ length: spec.timelineColumns }, () => '#,##0;[Red]-#,##0;"-"')
+      );
+    }
+
     if (totalModelColumns < MAX_EXCEL_COLUMNS) {
       const clearColumnCount = MAX_EXCEL_COLUMNS - totalModelColumns;
       const clearRange = sheet.getRangeByIndexes(0, totalModelColumns, MAX_EXCEL_ROWS, clearColumnCount);

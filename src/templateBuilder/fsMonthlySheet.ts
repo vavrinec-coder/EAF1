@@ -206,6 +206,23 @@ export async function createFsMonthlySheet(spec: FsMonthlySheetSpec): Promise<vo
     controlsFlagTimelineRange.formulas = flagTimelineFormulas;
     controlsFlagUnitRange.format.horizontalAlignment = Excel.HorizontalAlignment.left;
 
+    const bodyRowStart = 5;
+    const bodyRowCount = 995;
+    const bodyRange = sheet.getRangeByIndexes(bodyRowStart, 0, bodyRowCount, totalModelColumns);
+    bodyRange.format.font.name = spec.font.name;
+    bodyRange.format.font.size = spec.font.size;
+    if (spec.timelineColumns > 0) {
+      const timelineBodyRange = sheet.getRangeByIndexes(
+        bodyRowStart,
+        timelineStartColIndex,
+        bodyRowCount,
+        spec.timelineColumns
+      );
+      timelineBodyRange.numberFormat = Array.from({ length: bodyRowCount }, () =>
+        Array.from({ length: spec.timelineColumns }, () => '#,##0;[Red]-#,##0;"-"')
+      );
+    }
+
     applyFsSectionRow(sheet, 24, "P&L", totalModelColumns, spec.sectionColor);
     applyFsSectionRow(sheet, 30, "B/S", totalModelColumns, spec.sectionColor);
     applyFsSectionRow(sheet, 36, "CASH FLOWS", totalModelColumns, spec.sectionColor);
