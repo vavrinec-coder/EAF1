@@ -46,6 +46,7 @@ let opexLineItemsRangeInputEl: HTMLInputElement;
 let createOpexMonthlyButtonEl: HTMLButtonElement;
 let loadOpexLineItemCategoriesButtonEl: HTMLButtonElement;
 let updateOpexFormattingButtonEl: HTMLButtonElement;
+let loadOpexFormulasButtonEl: HTMLButtonElement;
 let createQuarterlyButtonEl: HTMLButtonElement;
 let quarterlyTabColorInputEl: HTMLInputElement;
 let quarterlySectionColorInputEl: HTMLInputElement;
@@ -164,6 +165,9 @@ Office.onReady((info) => {
   updateOpexFormattingButtonEl = document.getElementById(
     "update-opex-formatting"
   ) as HTMLButtonElement;
+  loadOpexFormulasButtonEl = document.getElementById(
+    "load-opex-formulas"
+  ) as HTMLButtonElement;
   createQuarterlyButtonEl = document.getElementById(
     "create-quarterly-sheet"
   ) as HTMLButtonElement;
@@ -246,6 +250,9 @@ Office.onReady((info) => {
   });
   updateOpexFormattingButtonEl.addEventListener("click", () => {
     void handleUpdateFsFormatting();
+  });
+  loadOpexFormulasButtonEl.addEventListener("click", () => {
+    void handleLoadOpexFormulas();
   });
   Office.context.document.addHandlerAsync(
     Office.EventType.DocumentSelectionChanged,
@@ -558,6 +565,109 @@ async function handleUpdateFsFormatting(): Promise<void> {
     });
 
     setStatus("Updated FS formatting.", "info");
+  } catch (error) {
+    setStatus(getErrorMessage(error), "error");
+  }
+}
+
+async function handleLoadOpexFormulas(): Promise<void> {
+  const timelineColumns = parsePositiveInt(timelineColumnsInputEl.value);
+  if (timelineColumns === null) {
+    setStatus("Columns for timeline must be a whole number of 1 or greater.", "error");
+    return;
+  }
+
+  const additionalColumnsResult = getAdditionalColumnsFromForm();
+  if (!additionalColumnsResult.ok) {
+    setStatus(additionalColumnsResult.error, "error");
+    return;
+  }
+
+  const constantsColumns = BASE_CONSTANTS_COLUMNS + additionalColumnsResult.additionalColumns;
+  const totalColumns = constantsColumns + timelineColumns;
+  if (totalColumns > MAX_EXCEL_COLUMNS) {
+    setStatus("Total model columns exceed Excel column limits.", "error");
+    return;
+  }
+
+  setStatus("Loading Opex formulas...", "info");
+
+  try {
+    await Excel.run(async (context) => {
+      const sheet = context.workbook.worksheets.getItemOrNullObject("Opex Monthly");
+      sheet.load("name");
+      await context.sync();
+
+      if (sheet.isNullObject) {
+        throw new Error('"Opex Monthly" sheet not found.');
+      }
+
+      const headerRange = sheet.getRange("A1:A1000");
+      headerRange.load("values");
+      await context.sync();
+
+      let detailsHeaderRow: number | null = null;
+      for (let i = 0; i < headerRange.values.length; i += 1) {
+        const value = headerRange.values[i][0];
+        if (value === null || value === undefined) {
+          continue;
+        }
+        if (String(value).trim().toUpperCase() === "LINE ITEM DETAILS / VENDORS") {
+          detailsHeaderRow = i + 1;
+          break;
+        }
+      }
+
+      let lastForecastRow = 58;
+      if (detailsHeaderRow !== null) {
+        lastForecastRow = Math.max(58, detailsHeaderRow - 3);
+      } else {
+        const usedRange = sheet.getUsedRangeOrNullObject();
+        usedRange.load(["rowIndex", "rowCount"]);
+        await context.sync();
+        if (!usedRange.isNullObject) {
+          lastForecastRow = Math.max(
+            58,
+            Math.min(1000, usedRange.rowIndex + usedRange.rowCount)
+          );
+        }
+      }
+
+      const forecastRowCount = lastForecastRow - 58 + 1;
+      if (forecastRowCount <= 0) {
+        return;
+      }
+
+      const formula =
+        '=IFERROR(IF(Y$11=1,0,IF($M58=0,0,CHOOSE($M58,Y26*INDEX($I58:$K58,MIN(3,Y$19)),Y27*INDEX($I58:$K58,MIN(3,Y$19)),Y28*INDEX($I58:$K58,MIN(3,Y$19)),Y29*INDEX($I58:$K58,MIN(3,Y$19)),Y33*(1+INDEX($I58:$K58,MIN(3,Y$19)))*$L58,Y32*(1+INDEX($I58:$K58,MIN(3,Y$19)))*$L58,Y30*(1+INDEX($I58:$K58,MIN(3,Y$19)))*$L58,Y31*(1+INDEX($I58:$K58,MIN(3,Y$19)))*$L58,IF(Y$13=1,AVERAGEIFS(X58:$Y58,X$2:$Y$2,\">=\"&$N58,X$2:$Y$2,\"<=\"&$O58)*(1+INDEX($I58:$K58,MIN(3,Y$19)))^(1/12),X58*(1+INDEX($I58:$K58,MIN(3,Y$19)))^(1/12)),INDEX(X58:$Y58,X$4-$H58+1)*(1+INDEX($I58:$K58,MIN(3,Y$19)))^($H58/12),IF(Y$13=1,$L58*(1+INDEX($I58:$K58,MIN(3,Y$19)))^(1/12),X58*(1+INDEX($I58:$K58,MIN(3,Y$19)))^(1/12)),SUMIFS(Y$178:Y$277,$G$178:$G$277,$B58),SUMIFS(Y$42:Y$51,$G$42:$G$51,$B58),0,0,0,0,))),0)';
+
+      const formulaAnchor = sheet.getRange("Y58");
+      formulaAnchor.formulas = [[formula]];
+
+      const timelineRange = sheet.getRangeByIndexes(
+        57,
+        constantsColumns,
+        forecastRowCount,
+        timelineColumns
+      );
+      timelineRange.copyFrom(formulaAnchor, Excel.RangeCopyType.formulas);
+
+      const categoryRange = sheet.getRangeByIndexes(57, 4, forecastRowCount, 1);
+      categoryRange.load("values");
+      await context.sync();
+
+      for (let rowOffset = 0; rowOffset < forecastRowCount; rowOffset += 1) {
+        const rawValue = categoryRange.values[rowOffset][0];
+        const category = rawValue === null || rawValue === undefined ? "" : String(rawValue).trim();
+        if (category.toLowerCase() !== "detail") {
+          const rowIndex = 57 + rowOffset;
+          const rowRange = sheet.getRangeByIndexes(rowIndex, constantsColumns, 1, timelineColumns);
+          rowRange.clear(Excel.ClearApplyTo.contents);
+        }
+      }
+    });
+
+    setStatus("Loaded Opex formulas.", "info");
   } catch (error) {
     setStatus(getErrorMessage(error), "error");
   }
