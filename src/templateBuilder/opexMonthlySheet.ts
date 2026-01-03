@@ -236,6 +236,16 @@ export async function createOpexMonthlySheet(
     sheet.getRange("B41").format.font.bold = true;
     sheet.getRange("G41").values = [["Map to Opex account:"]];
     sheet.getRange("G41").format.font.bold = true;
+    sheet.getRange("G41").format.font.color = "#000000";
+    sheet.getRange("G41").format.fill.clear();
+    sheet.getRange("G41").format.borders.getItem(Excel.BorderIndex.edgeTop).style =
+      Excel.BorderLineStyle.none;
+    sheet.getRange("G41").format.borders.getItem(Excel.BorderIndex.edgeBottom).style =
+      Excel.BorderLineStyle.none;
+    sheet.getRange("G41").format.borders.getItem(Excel.BorderIndex.edgeLeft).style =
+      Excel.BorderLineStyle.none;
+    sheet.getRange("G41").format.borders.getItem(Excel.BorderIndex.edgeRight).style =
+      Excel.BorderLineStyle.none;
 
     const linkedPlaceholders = Array.from({ length: 10 }, () => ["Placeholder"]);
     sheet.getRangeByIndexes(41, 1, linkedPlaceholders.length, 1).values = linkedPlaceholders;
@@ -283,7 +293,7 @@ export async function createOpexMonthlySheet(
       applyHairlineBorders(driverRange);
 
       if (opexAccountSource) {
-        const mapRange = sheet.getRange("G41:G51");
+        const mapRange = sheet.getRange("G42:G51");
         mapRange.dataValidation.rule = {
           list: {
             inCellDropDown: true,

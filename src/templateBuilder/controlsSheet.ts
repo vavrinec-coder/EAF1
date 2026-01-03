@@ -180,7 +180,7 @@ export async function createControlsSheet(spec: ControlsSheetSpec): Promise<void
       [spec.constantsBlock.forecastPeriod],
     ];
     valueRange.format.horizontalAlignment = Excel.HorizontalAlignment.right;
-    sheet.getRange("D12").values = [["Don not change"]];
+    sheet.getRange("D12").values = [["Do not change"]];
     sheet.getRange("D12").format.font.color = "#C00000";
 
     const row1 = constantsStartRow;

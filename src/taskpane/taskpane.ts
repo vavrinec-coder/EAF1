@@ -45,6 +45,7 @@ let fsMonthlySectionColorInputEl: HTMLInputElement;
 let opexLineItemsRangeInputEl: HTMLInputElement;
 let createOpexMonthlyButtonEl: HTMLButtonElement;
 let loadOpexLineItemCategoriesButtonEl: HTMLButtonElement;
+let updateOpexFormattingButtonEl: HTMLButtonElement;
 let createQuarterlyButtonEl: HTMLButtonElement;
 let quarterlyTabColorInputEl: HTMLInputElement;
 let quarterlySectionColorInputEl: HTMLInputElement;
@@ -160,6 +161,9 @@ Office.onReady((info) => {
   loadOpexLineItemCategoriesButtonEl = document.getElementById(
     "load-opex-line-item-categories"
   ) as HTMLButtonElement;
+  updateOpexFormattingButtonEl = document.getElementById(
+    "update-opex-formatting"
+  ) as HTMLButtonElement;
   createQuarterlyButtonEl = document.getElementById(
     "create-quarterly-sheet"
   ) as HTMLButtonElement;
@@ -239,6 +243,9 @@ Office.onReady((info) => {
   });
   loadOpexLineItemCategoriesButtonEl.addEventListener("click", () => {
     void handleLoadLineItemCategories();
+  });
+  updateOpexFormattingButtonEl.addEventListener("click", () => {
+    void handleUpdateFsFormatting();
   });
   Office.context.document.addHandlerAsync(
     Office.EventType.DocumentSelectionChanged,
