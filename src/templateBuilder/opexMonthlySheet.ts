@@ -481,6 +481,7 @@ export async function createOpexMonthlySheet(
       clearRange.clear(Excel.ClearApplyTo.all);
     }
 
+    context.workbook.application.calculate(Excel.CalculationType.full);
     sheet.activate();
     await context.sync();
   });
