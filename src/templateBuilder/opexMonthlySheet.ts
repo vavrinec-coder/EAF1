@@ -13,6 +13,8 @@ export async function createOpexMonthlySheet(
   spec: MonthlySheetSpec,
   lineItemsAddress: string
 ): Promise<void> {
+  let forecastRowCount = 0;
+
   await Excel.run(async (context) => {
     const worksheets = context.workbook.worksheets;
     const controlsSheet = worksheets.getItemOrNullObject("Controls");
@@ -207,6 +209,7 @@ export async function createOpexMonthlySheet(
     lineItemsRange.load(["rowCount", "columnCount"]);
     await context.sync();
 
+    forecastRowCount = lineItemsRange.rowCount;
     const lineItemsEndRow =
       lineItemsRange.rowCount > 0 ? 57 + lineItemsRange.rowCount : 57;
     const opexAccountSource =
@@ -277,8 +280,6 @@ export async function createOpexMonthlySheet(
       );
       targetRange.copyFrom(lineItemsRange, Excel.RangeCopyType.all, false, false);
     }
-
-    let conditionalRangeToCalculate: Excel.Range | null = null;
 
     if (lineItemsRange.rowCount > 0) {
       const driverRange = sheet.getRangeByIndexes(57, 6, lineItemsRange.rowCount, 1);
@@ -355,13 +356,6 @@ export async function createOpexMonthlySheet(
       const matchRangeO = sheet.getRangeByIndexes(57, 14, lineItemsRange.rowCount, 1);
       matchRangeO.formulas = opexDateFormulas;
 
-      const conditionalRange = sheet.getRangeByIndexes(57, 7, lineItemsRange.rowCount, 1);
-      const conditionalFormat = conditionalRange.conditionalFormats.add(
-        Excel.ConditionalFormatType.custom
-      );
-      conditionalFormat.custom.rule.formula = "=NOT(OR($M58=9,$M58=10))";
-      conditionalFormat.custom.format.fill.color = "#D9D9D9";
-      conditionalRangeToCalculate = conditionalRange;
     }
 
     const detailsHeaderRow = lineItemsEndRow + 3;
@@ -484,14 +478,13 @@ export async function createOpexMonthlySheet(
       clearRange.clear(Excel.ClearApplyTo.all);
     }
 
-    await context.sync();
-    if (conditionalRangeToCalculate) {
-      conditionalRangeToCalculate.calculate();
-    }
-    context.workbook.application.calculate(Excel.CalculationType.fullRebuild);
-    await context.sync();
     sheet.activate();
+    await context.sync();
   });
+
+  if (forecastRowCount > 0) {
+    await applyOpexForecastConditionalFormat(forecastRowCount);
+  }
 }
 
 function applyColumnWidths(
@@ -586,6 +579,31 @@ function applyHairlineBorders(range: Excel.Range): void {
     const border = borders.getItem(borderIndex);
     border.style = Excel.BorderLineStyle.continuous;
     border.weight = Excel.BorderWeight.hairline;
+  });
+}
+
+async function applyOpexForecastConditionalFormat(rowCount: number): Promise<void> {
+  await Excel.run(async (context) => {
+    const sheet = context.workbook.worksheets.getItemOrNullObject("Opex Monthly");
+    sheet.load("name");
+    await context.sync();
+
+    if (sheet.isNullObject) {
+      return;
+    }
+
+    const conditionalRange = sheet.getRangeByIndexes(57, 7, rowCount, 1);
+    conditionalRange.conditionalFormats.clearAll();
+    const conditionalFormat = conditionalRange.conditionalFormats.add(
+      Excel.ConditionalFormatType.custom
+    );
+    conditionalFormat.custom.rule.formula = "=NOT(OR($M58=9,$M58=10))";
+    conditionalFormat.custom.format.fill.color = "#D9D9D9";
+
+    await context.sync();
+    conditionalRange.calculate();
+    context.workbook.application.calculate(Excel.CalculationType.fullRebuild);
+    await context.sync();
   });
 }
 
