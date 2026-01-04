@@ -278,6 +278,8 @@ export async function createOpexMonthlySheet(
       targetRange.copyFrom(lineItemsRange, Excel.RangeCopyType.all, false, false);
     }
 
+    let conditionalRangeToCalculate: Excel.Range | null = null;
+
     if (lineItemsRange.rowCount > 0) {
       const driverRange = sheet.getRangeByIndexes(57, 6, lineItemsRange.rowCount, 1);
       driverRange.dataValidation.rule = {
@@ -357,8 +359,9 @@ export async function createOpexMonthlySheet(
       const conditionalFormat = conditionalRange.conditionalFormats.add(
         Excel.ConditionalFormatType.custom
       );
-      conditionalFormat.custom.rule.formula = "=NOT(OR(M58=9, M58=10))";
+      conditionalFormat.custom.rule.formula = "=NOT(OR($M58=9,$M58=10))";
       conditionalFormat.custom.format.fill.color = "#D9D9D9";
+      conditionalRangeToCalculate = conditionalRange;
     }
 
     const detailsHeaderRow = lineItemsEndRow + 3;
@@ -481,9 +484,13 @@ export async function createOpexMonthlySheet(
       clearRange.clear(Excel.ClearApplyTo.all);
     }
 
-    context.workbook.application.calculate(Excel.CalculationType.fullRebuild);
-    sheet.activate();
     await context.sync();
+    if (conditionalRangeToCalculate) {
+      conditionalRangeToCalculate.calculate();
+    }
+    context.workbook.application.calculate(Excel.CalculationType.fullRebuild);
+    await context.sync();
+    sheet.activate();
   });
 }
 
