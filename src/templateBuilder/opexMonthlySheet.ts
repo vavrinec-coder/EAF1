@@ -352,6 +352,13 @@ export async function createOpexMonthlySheet(
       });
       const matchRangeO = sheet.getRangeByIndexes(57, 14, lineItemsRange.rowCount, 1);
       matchRangeO.formulas = opexDateFormulas;
+
+      const conditionalRange = sheet.getRangeByIndexes(57, 7, lineItemsRange.rowCount, 1);
+      const conditionalFormat = conditionalRange.conditionalFormats.add(
+        Excel.ConditionalFormatType.custom
+      );
+      conditionalFormat.custom.rule.formula = "=NOT(OR(M58=9, M58=10))";
+      conditionalFormat.custom.format.fill.color = "#D9D9D9";
     }
 
     const detailsHeaderRow = lineItemsEndRow + 3;
