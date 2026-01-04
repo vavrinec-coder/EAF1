@@ -595,17 +595,27 @@ async function applyOpexForecastConditionalFormat(rowCount: number): Promise<voi
     }
 
     const originalCalcMode = application.calculationMode;
-    const conditionalRange = sheet.getRangeByIndexes(57, 7, rowCount, 1);
-    conditionalRange.conditionalFormats.clearAll();
-    const conditionalFormat = conditionalRange.conditionalFormats.add(
+    const conditionalRangeH = sheet.getRangeByIndexes(57, 7, rowCount, 1);
+    conditionalRangeH.conditionalFormats.clearAll();
+    const conditionalFormatH = conditionalRangeH.conditionalFormats.add(
       Excel.ConditionalFormatType.custom
     );
-    conditionalFormat.custom.format.fill.color = "#D9D9D9";
-    conditionalFormat.custom.rule.formula = "=FALSE";
+    conditionalFormatH.custom.format.fill.color = "#D9D9D9";
+    conditionalFormatH.custom.rule.formula = "=FALSE";
     await context.sync();
-    conditionalFormat.custom.rule.formula = "=NOT(OR($M58=9,$M58=10))";
+    conditionalFormatH.custom.rule.formula = "=NOT(OR($M58=9,$M58=10))";
 
-    conditionalRange.setDirty();
+    const conditionalRangeIJK = sheet.getRangeByIndexes(57, 8, rowCount, 3);
+    conditionalRangeIJK.conditionalFormats.clearAll();
+    const conditionalFormatIJK = conditionalRangeIJK.conditionalFormats.add(
+      Excel.ConditionalFormatType.custom
+    );
+    conditionalFormatIJK.custom.format.fill.color = "#D9D9D9";
+    conditionalFormatIJK.custom.rule.formula = "=FALSE";
+    await context.sync();
+    conditionalFormatIJK.custom.rule.formula = "=$M58>11";
+
+    conditionalRangeH.setDirty();
     const driverIdRange = sheet.getRangeByIndexes(57, 12, rowCount, 1);
     driverIdRange.setDirty();
 
