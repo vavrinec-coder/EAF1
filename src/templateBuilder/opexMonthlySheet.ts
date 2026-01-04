@@ -615,6 +615,16 @@ async function applyOpexForecastConditionalFormat(rowCount: number): Promise<voi
     await context.sync();
     conditionalFormatIJK.custom.rule.formula = "=$M58>11";
 
+    const conditionalRangeL = sheet.getRangeByIndexes(57, 11, rowCount, 1);
+    conditionalRangeL.conditionalFormats.clearAll();
+    const conditionalFormatL = conditionalRangeL.conditionalFormats.add(
+      Excel.ConditionalFormatType.custom
+    );
+    conditionalFormatL.custom.format.fill.color = "#D9D9D9";
+    conditionalFormatL.custom.rule.formula = "=FALSE";
+    await context.sync();
+    conditionalFormatL.custom.rule.formula = "=NOT(OR($M58=5,$M58=6,$M58=7,$M58=8,$M58=11))";
+
     conditionalRangeH.setDirty();
     const driverIdRange = sheet.getRangeByIndexes(57, 12, rowCount, 1);
     driverIdRange.setDirty();
