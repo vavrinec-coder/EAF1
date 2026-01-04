@@ -270,6 +270,13 @@ export async function createOpexMonthlySheet(
     sheet.getRange("H5:L5").formulas = [["=H57", "=I57", "=J57", "=K57", "=L57"]];
     sheet.getRange("I56").values = [["Annual % change / % of"]];
     sheet.getRange("I56").format.font.bold = true;
+    const notApplicableRange = sheet.getRange("H55:L55");
+    notApplicableRange.format.fill.color = "#D9D9D9";
+    const notApplicableCell = sheet.getRange("H55");
+    notApplicableCell.values = [["Not applicable"]];
+    notApplicableCell.format.font.bold = true;
+    notApplicableCell.format.font.italic = true;
+    notApplicableCell.format.font.color = "#C00000";
 
     if (lineItemsRange.rowCount > 0 && lineItemsRange.columnCount > 0) {
       const targetRange = sheet.getRangeByIndexes(
