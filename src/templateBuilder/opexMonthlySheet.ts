@@ -585,24 +585,35 @@ function applyHairlineBorders(range: Excel.Range): void {
 async function applyOpexForecastConditionalFormat(rowCount: number): Promise<void> {
   await Excel.run(async (context) => {
     const sheet = context.workbook.worksheets.getItemOrNullObject("Opex Monthly");
+    const application = context.workbook.application;
     sheet.load("name");
+    application.load("calculationMode");
     await context.sync();
 
     if (sheet.isNullObject) {
       return;
     }
 
+    const originalCalcMode = application.calculationMode;
     const conditionalRange = sheet.getRangeByIndexes(57, 7, rowCount, 1);
     conditionalRange.conditionalFormats.clearAll();
     const conditionalFormat = conditionalRange.conditionalFormats.add(
       Excel.ConditionalFormatType.custom
     );
-    conditionalFormat.custom.rule.formula = "=NOT(OR($M58=9,$M58=10))";
     conditionalFormat.custom.format.fill.color = "#D9D9D9";
-
+    conditionalFormat.custom.rule.formula = "=FALSE";
     await context.sync();
-    conditionalRange.calculate();
-    context.workbook.application.calculate(Excel.CalculationType.fullRebuild);
+    conditionalFormat.custom.rule.formula = "=NOT(OR($M58=9,$M58=10))";
+
+    conditionalRange.setDirty();
+    const driverIdRange = sheet.getRangeByIndexes(57, 12, rowCount, 1);
+    driverIdRange.setDirty();
+
+    application.calculationMode = Excel.CalculationMode.manual;
+    await context.sync();
+    application.calculate(Excel.CalculationType.fullRebuild);
+    application.calculationMode = originalCalcMode;
+
     await context.sync();
   });
 }
